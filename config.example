@@ -1,0 +1,37 @@
+# Copy to ~/.config/inbrief/inbrief.conf and run: chmod 600 ~/.config/inbrief/inbrief.conf
+
+[gmail]
+client_secrets_file = credentials.json
+token_file = token.json
+max_messages = 20
+max_body_chars = 8000
+
+[anthropic]
+# Prefer the INBRIEF_ANTHROPIC_API_KEY environment variable.
+api_key =
+model = claude-sonnet-4-6
+max_tokens = 4096
+timeout_seconds = 120
+
+[email]
+recipient = you@example.com
+sender_name = InBrief
+sender = you@example.com
+subject_prefix = Digest
+
+[digest]
+timezone = Europe/London
+persona = a technology leader
+priorities = AI, cybersecurity, cloud infrastructure, and engineering leadership
+
+[labels]
+Technology = Label_123456789
+
+[mail]
+smtp_host = smtp.example.com
+smtp_port = 587
+security = starttls
+timeout_seconds = 30
+# Prefer INBRIEF_SMTP_USER and INBRIEF_SMTP_PASSWORD.
+smtp_user =
+smtp_password =

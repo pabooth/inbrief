@@ -1,0 +1,62 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "inbrief"
+version = "0.1.0"
+description = "Generate and email AI summaries of messages from Gmail labels."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10"
+authors = [{ name = "Paul Booth" }]
+keywords = ["gmail", "email", "digest", "anthropic", "claude"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Communications :: Email",
+]
+dependencies = [
+  "anthropic>=0.40,<1",
+  "google-api-python-client>=2.150,<3",
+  "google-auth>=2.35,<3",
+  "google-auth-oauthlib>=1.2,<2",
+]
+
+[project.optional-dependencies]
+dev = [
+  "build>=1.2,<2",
+  "pytest>=8,<9",
+  "ruff>=0.8,<1",
+  "setuptools>=77",
+]
+
+[project.scripts]
+inbrief = "inbrief:main"
+inbrief-oauth = "oauth_setup:main"
+
+[project.urls]
+Homepage = "https://github.com/pabooth/inbrief"
+Issues = "https://github.com/pabooth/inbrief/issues"
+Source = "https://github.com/pabooth/inbrief"
+
+[tool.setuptools]
+py-modules = ["inbrief", "oauth_setup"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "S"]
+ignore = ["S101"]

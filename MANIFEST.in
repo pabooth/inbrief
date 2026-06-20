@@ -1,0 +1,4 @@
+include config.example
+include CONTRIBUTING.md
+include header.png
+include SECURITY.md
