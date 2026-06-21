@@ -1,9 +1,10 @@
-![InBrief](https://raw.githubusercontent.com/pabooth/inbrief/main/header.png)
+![InBrief](./header.png)
 
 # InBrief
 
-[![CI](https://github.com/pabooth/inbrief/actions/workflows/ci.yml/badge.svg)](https://github.com/pabooth/inbrief/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+![CI](https://img.shields.io/github/actions/workflow/status/pabooth/inbrief/ci.yml?branch=main)
+![License: MIT](https://img.shields.io/badge/license-MIT-green)
+![Version](https://img.shields.io/github/v/release/pabooth/inbrief)
 
 InBrief reads messages received during the previous 24 hours from selected Gmail
 labels, asks Claude to produce a concise digest, and sends one digest per label by
