@@ -1,7 +1,5 @@
 ![InBrief](./header.png)
 
-# InBrief
-
 ![CI](https://img.shields.io/github/actions/workflow/status/pabooth/inbrief/ci.yml?branch=main)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 ![Version](https://img.shields.io/github/v/release/pabooth/inbrief)
