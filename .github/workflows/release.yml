@@ -72,6 +72,7 @@ jobs:
           /tmp/inbrief-release/bin/python -m pip install dist/*.whl
           /tmp/inbrief-release/bin/inbrief --version | grep -Fx "inbrief ${RELEASE_VERSION}"
           /tmp/inbrief-release/bin/inbrief --help > /dev/null
+          /tmp/inbrief-release/bin/inbrief-oauth --version | grep -Fx "inbrief-oauth ${RELEASE_VERSION}"
           /tmp/inbrief-release/bin/inbrief-oauth --help > /dev/null
 
       - name: Extract release notes
