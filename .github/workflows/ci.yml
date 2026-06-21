@@ -26,4 +26,15 @@ jobs:
       - run: python -m pip install -e ".[dev]"
       - run: ruff check .
       - run: pytest
-      - run: python -m build
+      - name: Build distributions
+        run: python -m build
+      - name: Smoke-test built wheel
+        run: |
+          test -n "$(find dist -maxdepth 1 -name '*.whl' -print -quit)"
+          test -n "$(find dist -maxdepth 1 -name '*.tar.gz' -print -quit)"
+          python -m venv /tmp/inbrief-wheel
+          /tmp/inbrief-wheel/bin/python -m pip install dist/*.whl
+          /tmp/inbrief-wheel/bin/inbrief --version
+          /tmp/inbrief-wheel/bin/inbrief --help > /dev/null
+          /tmp/inbrief-wheel/bin/inbrief-oauth --version
+          /tmp/inbrief-wheel/bin/inbrief-oauth --help > /dev/null

@@ -1,0 +1,94 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Extract version
+        id: version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify release metadata
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          python - <<'PY'
+          import os
+          import tomllib
+          from pathlib import Path
+
+          expected = os.environ["RELEASE_VERSION"]
+          versions = {
+              "VERSION": Path("VERSION").read_text().strip(),
+              "pyproject.toml": tomllib.loads(
+                  Path("pyproject.toml").read_text()
+              )["project"]["version"],
+          }
+          for source, actual in versions.items():
+              if actual != expected:
+                  raise SystemExit(
+                      f"{source}: expected {expected}, found {actual}"
+                  )
+          heading = f"## [{expected}]"
+          if heading not in Path("CHANGELOG.md").read_text():
+              raise SystemExit(f"CHANGELOG.md has no {heading} section")
+          PY
+
+      - name: Install development tools
+        run: python -m pip install --upgrade pip ".[dev]"
+
+      - name: Run checks
+        run: |
+          ruff check .
+          pytest
+
+      - name: Build distributions
+        run: python -m build
+
+      - name: Smoke-test built wheel
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          python -m venv /tmp/inbrief-release
+          /tmp/inbrief-release/bin/python -m pip install dist/*.whl
+          /tmp/inbrief-release/bin/inbrief --version | grep -Fx "inbrief ${RELEASE_VERSION}"
+          /tmp/inbrief-release/bin/inbrief --help > /dev/null
+          /tmp/inbrief-release/bin/inbrief-oauth --help > /dev/null
+
+      - name: Extract release notes
+        id: notes
+        env:
+          RELEASE_VERSION: ${{ steps.version.outputs.VERSION }}
+        run: |
+          NOTES=$(awk "/^## \[${RELEASE_VERSION}\]/{found=1; next} found && /^## /{exit} found{print}" CHANGELOG.md)
+          {
+            echo "NOTES<<EOF"
+            echo "$NOTES"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: v${{ steps.version.outputs.VERSION }}
+          body: ${{ steps.notes.outputs.NOTES }}
+          files: dist/*

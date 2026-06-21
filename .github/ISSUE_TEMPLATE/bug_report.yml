@@ -1,0 +1,57 @@
+name: Bug report
+description: Report a reproducible problem
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Do not include email content, OAuth files or tokens, API keys, SMTP credentials, or personal addresses.
+  - type: input
+    id: version
+    attributes:
+      label: InBrief version
+      placeholder: Output of `inbrief --version`
+    validations:
+      required: true
+  - type: input
+    id: python
+    attributes:
+      label: Python version and operating system
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Gmail or OAuth
+        - Digest generation
+        - SMTP delivery
+        - Configuration
+        - Packaging or installation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Sanitized logs or additional context
+      description: Remove private email content, credentials, OAuth data, and personal addresses.

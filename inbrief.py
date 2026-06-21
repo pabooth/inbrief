@@ -18,6 +18,7 @@ from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
 from email.utils import formataddr
 from html.parser import HTMLParser
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
@@ -36,6 +37,17 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 log = logging.getLogger(APP_NAME)
+
+
+def read_version() -> str:
+    """Return installed package metadata, falling back for source-tree use."""
+    try:
+        return version(APP_NAME)
+    except PackageNotFoundError:
+        try:
+            return Path(__file__).with_name("VERSION").read_text().strip()
+        except OSError:
+            return "unknown"
 
 
 def default_config_path() -> Path:
@@ -616,7 +628,12 @@ def send_email(
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(prog=APP_NAME, description=__doc__)
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {read_version()}",
+    )
     parser.add_argument(
         "--config",
         type=Path,
