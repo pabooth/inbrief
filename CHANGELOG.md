@@ -8,6 +8,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-06-21
+
 ### Added
 
 - `inbrief --version` using installed package metadata.
