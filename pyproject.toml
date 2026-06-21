@@ -13,7 +13,6 @@ requires-python = ">=3.10"
 authors = [{ name = "Paul Booth" }]
 keywords = ["gmail", "email", "digest", "anthropic", "claude"]
 classifiers = [
-  "Development Status :: 3 - Alpha",
   "Environment :: Console",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.10",

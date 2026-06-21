@@ -67,6 +67,7 @@ export INBRIEF_SMTP_PASSWORD='...'
 
 ```console
 inbrief-oauth
+inbrief-oauth --version
 ```
 
 The resulting token is restricted to read-only Gmail access and is written with
@@ -97,6 +98,7 @@ Useful options:
 inbrief --dry-run
 inbrief --label Technology
 inbrief --config /path/to/inbrief.conf
+inbrief --version
 inbrief --help
 ```
 
@@ -129,4 +131,9 @@ python -m build
 ```
 
 Contributions are covered by the [MIT License](LICENSE). See
-[CONTRIBUTING.md](CONTRIBUTING.md).
+[CONTRIBUTING.md](CONTRIBUTING.md), [CHANGELOG.md](CHANGELOG.md), and
+[SUPPORT.md](SUPPORT.md).
+
+## License
+
+[MIT](LICENSE)

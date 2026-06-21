@@ -5,25 +5,36 @@ from __future__ import annotations
 
 import argparse
 import sys
+from collections.abc import Sequence
 from pathlib import Path
 
 from inbrief import (
     GMAIL_READONLY_SCOPE,
     default_config_path,
     load_config,
+    read_version,
     resolve_config_path,
 )
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="inbrief-oauth", description=__doc__)
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {read_version()}",
+    )
     parser.add_argument("--config", type=Path, default=default_config_path())
     parser.add_argument(
         "--client-secrets",
         type=Path,
         help="Google OAuth desktop client JSON; overrides [gmail] client_secrets_file",
     )
-    args = parser.parse_args()
+    return parser
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    args = build_parser().parse_args(argv)
 
     try:
         from google_auth_oauthlib.flow import InstalledAppFlow

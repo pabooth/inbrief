@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 import inbrief
+import oauth_setup
 
 
 def config() -> configparser.ConfigParser:
@@ -22,6 +23,24 @@ def config() -> configparser.ConfigParser:
         }
     )
     return cfg
+
+
+def test_cli_reports_package_version(capsys):
+    with pytest.raises(SystemExit) as exc_info:
+        inbrief.build_parser().parse_args(["--version"])
+
+    assert exc_info.value.code == 0
+    assert capsys.readouterr().out.strip() == f"inbrief {inbrief.read_version()}"
+
+
+def test_oauth_cli_reports_package_version(capsys):
+    with pytest.raises(SystemExit) as exc_info:
+        oauth_setup.build_parser().parse_args(["--version"])
+
+    assert exc_info.value.code == 0
+    assert capsys.readouterr().out.strip() == (
+        f"inbrief-oauth {inbrief.read_version()}"
+    )
 
 
 def test_ordinal_handles_teens():
