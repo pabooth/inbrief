@@ -1,14 +1,14 @@
-![InBrief](./header.png)
+![InBrief](header.png)
 
 ![CI](https://img.shields.io/github/actions/workflow/status/pabooth/inbrief/ci.yml?branch=main)
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 ![Version](https://img.shields.io/github/v/release/pabooth/inbrief)
 
 InBrief reads messages received during the previous 24 hours from selected Gmail
-labels, asks Claude to produce a concise digest, and sends one digest per label by
-email.
+labels, asks Claude to produce a concise digest, and sends one digest per label
+by email.
 
-> [!IMPORTANT]
+> [!WARNING]
 > InBrief sends the contents of matching emails to Anthropic. Do not use it with
 > sensitive mail unless that data transfer is acceptable under your security,
 > privacy, and compliance requirements.
@@ -20,7 +20,7 @@ email.
 - An Anthropic API key
 - An SMTP account
 
-## Install
+## Installation
 
 Clone the repository and install it in a virtual environment:
 
@@ -34,7 +34,7 @@ python -m pip install .
 
 For development, use `python -m pip install -e ".[dev]"`.
 
-## Configure
+## Quick start
 
 Create the configuration directory and copy the example:
 
@@ -60,10 +60,10 @@ export INBRIEF_SMTP_PASSWORD='...'
 
 ### Google OAuth
 
-1. In Google Cloud, enable the Gmail API and create an OAuth client with application
-   type **Desktop app**.
+1. In Google Cloud, enable the Gmail API and create an OAuth client with
+   application type **Desktop app**.
 2. Download its JSON file to `~/.config/inbrief/credentials.json`.
-3. Complete the browser authorization flow:
+3. Complete the browser authorisation flow:
 
 ```console
 inbrief-oauth
@@ -75,8 +75,8 @@ owner-only permissions.
 
 ### Gmail label IDs
 
-The values in `[labels]` are Gmail label IDs, not necessarily their visible names.
-You can retrieve them with the Gmail API
+The values in `[labels]` are Gmail label IDs, not necessarily their visible
+names. You can retrieve them with the Gmail API
 [`users.labels.list`](https://developers.google.com/gmail/api/reference/rest/v1/users.labels/list)
 or an API client. Each key is the display name used in the generated email:
 
@@ -102,25 +102,26 @@ inbrief --version
 inbrief --help
 ```
 
-`--dry-run` still reads Gmail and calls Anthropic, but prints the digest instead of
-sending it through SMTP. A failed label does not prevent later labels from being
-processed; the command exits non-zero if any label fails.
+`--dry-run` still reads Gmail and calls Anthropic, but prints the digest instead
+of sending it through SMTP. A failed label does not prevent later labels from
+being processed; the command exits non-zero if any label fails.
 
-For unattended operation, invoke `inbrief` from cron, systemd, launchd, or another
-scheduler. Ensure the scheduler receives the required environment variables.
+For unattended operation, invoke `inbrief` from cron, systemd, launchd, or
+another scheduler. Ensure the scheduler receives the required environment
+variables.
 
 ## Security notes
 
-- Never commit `inbrief.conf`, OAuth client files, OAuth tokens, API keys, or SMTP
-  credentials. The included `.gitignore` excludes the common local filenames.
-- Email bodies are untrusted input. InBrief separates them in the model prompt and
-  escapes generated HTML, but prompt-injection risk cannot be eliminated entirely.
+- Never commit `inbrief.conf`, OAuth client files, OAuth tokens, API keys, or
+  SMTP credentials. The included `.gitignore` excludes the common local
+  filenames.
+- Email bodies are untrusted input. InBrief separates them in the model prompt
+  and escapes generated HTML, but prompt-injection risk cannot be eliminated
+  entirely.
 - SMTP uses verified TLS by default. Set `security = ssl` for implicit TLS or
   `security = none` only for a trusted local relay.
-- The Gmail token grants read-only mailbox access. Revoke it from your Google account
-  if the machine or token file is compromised.
-
-See [SECURITY.md](SECURITY.md) for vulnerability reporting.
+- The Gmail token grants read-only mailbox access. Revoke it from your Google
+  account if the machine or token file is compromised.
 
 ## Development
 
@@ -130,10 +131,9 @@ pytest
 python -m build
 ```
 
-Contributions are covered by the [MIT License](LICENSE). See
-[CONTRIBUTING.md](CONTRIBUTING.md), [CHANGELOG.md](CHANGELOG.md), and
+See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), and
 [SUPPORT.md](SUPPORT.md).
 
 ## License
 
-[MIT](LICENSE)
+MIT © 2026 Paul Booth. See [LICENSE](LICENSE).
