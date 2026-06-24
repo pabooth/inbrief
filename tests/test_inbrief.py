@@ -164,12 +164,13 @@ def test_email_template_escapes_dynamic_values():
         "Today",
         "Hello",
         datetime(2026, 6, 20, tzinfo=timezone.utc),
+        "Claude Sonnet 4.8",
     )
     assert "<script>label</script>" not in rendered
     assert "&lt;script&gt;label&lt;/script&gt;" in rendered
     assert "body { margin:0" in rendered
     assert "The Daily Digest" in rendered
-    assert "Compiled by InBrief" in rendered
+    assert "Compiled by InBrief &amp; Claude Sonnet 4.8" in rendered
     assert "#9a2d27" in rendered
 
 
@@ -179,9 +180,25 @@ def test_email_template_does_not_replace_placeholders_in_body_content():
         "Today",
         "Literal DATE_FRIENDLY, BODY_HTML, and TIME_FRIENDLY",
         datetime(2026, 6, 20, tzinfo=timezone.utc),
+        "DeepSeek V4 Pro",
     )
 
     assert "<p>Literal DATE_FRIENDLY, BODY_HTML, and TIME_FRIENDLY</p>" in rendered
+
+
+@pytest.mark.parametrize(
+    ("provider", "model", "expected"),
+    [
+        ("anthropic", "claude-sonnet-4-8", "Claude Sonnet 4.8"),
+        ("anthropic", "claude-3-7-sonnet-latest", "Claude Sonnet 3.7"),
+        ("openai", "gpt-5.5", "GPT-5.5"),
+        ("openai", "o3", "o3"),
+        ("deepseek", "deepseek-v4-pro", "DeepSeek V4 Pro"),
+        ("deepseek", "deepseek-v4-flash", "DeepSeek V4 Flash"),
+    ],
+)
+def test_format_model_name(provider, model, expected):
+    assert inbrief.format_model_name(provider, model) == expected
 
 
 def test_system_prompt_requests_daily_digest_structure():

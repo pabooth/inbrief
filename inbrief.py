@@ -532,8 +532,61 @@ def markdown_to_html(text: str) -> str:
     return "\n".join(html_lines)
 
 
+def format_model_name(provider: str, model: str) -> str:
+    """Return a readable model name while preserving common brand styling."""
+    normalized_provider = provider.strip().lower()
+    normalized_model = model.strip()
+
+    claude_match = re.fullmatch(
+        r"claude-(opus|sonnet|haiku)-(\d+)-(\d+)(?:-(.+))?",
+        normalized_model,
+        re.IGNORECASE,
+    )
+    if claude_match:
+        family, major, minor, suffix = claude_match.groups()
+        name = f"Claude {family.title()} {major}.{minor}"
+        if suffix and suffix.lower() != "latest":
+            name += f" {suffix.replace('-', ' ').title()}"
+        return name
+
+    older_claude_match = re.fullmatch(
+        r"claude-(\d+)-(\d+)-(opus|sonnet|haiku)(?:-(.+))?",
+        normalized_model,
+        re.IGNORECASE,
+    )
+    if older_claude_match:
+        major, minor, family, suffix = older_claude_match.groups()
+        name = f"Claude {family.title()} {major}.{minor}"
+        if suffix and suffix.lower() != "latest":
+            name += f" {suffix.replace('-', ' ').title()}"
+        return name
+
+    if normalized_provider == "deepseek":
+        parts = normalized_model.removeprefix("deepseek-").split("-")
+        readable = [
+            (
+                part.upper()
+                if re.fullmatch(r"v\d+(?:\.\d+)?", part, re.IGNORECASE)
+                else part.title()
+            )
+            for part in parts
+        ]
+        return "DeepSeek" + (f" {' '.join(readable)}" if readable else "")
+
+    if normalized_provider == "openai":
+        if normalized_model.lower().startswith("gpt-"):
+            return f"GPT-{normalized_model[4:]}"
+        return normalized_model
+
+    return normalized_model.replace("-", " ").title()
+
+
 def render_email_html(
-    display_name: str, date_friendly: str, body_markdown: str, now: datetime
+    display_name: str,
+    date_friendly: str,
+    body_markdown: str,
+    now: datetime,
+    model_name: str,
 ) -> str:
     body_html = markdown_to_html(body_markdown)
     template = """<!doctype html>
@@ -618,7 +671,7 @@ body { margin:0; padding:0; background:#edeae4;
   <div class="masthead-rule"></div>
   <div class="content">${BODY_HTML}</div>
   <div class="footer">
-    <div>Compiled by InBrief</div>
+    <div>Compiled by InBrief &amp; ${MODEL_NAME}</div>
     <div>Reply to suggest a topic · flag a correction</div>
   </div>
 </div>
@@ -631,6 +684,7 @@ body { margin:0; padding:0; background:#edeae4;
         DATE_FRIENDLY=html.escape(date_friendly),
         TIME_FRIENDLY=html.escape(now.strftime("%H:%M %Z")),
         BODY_HTML=body_html,
+        MODEL_NAME=html.escape(model_name),
     )
 
 
@@ -850,6 +904,8 @@ def send_email(
     cfg: configparser.ConfigParser, display_name: str, body_markdown: str
 ) -> None:
     local_now = datetime.now(timezone.utc).astimezone(get_local_timezone(cfg))
+    provider, model, _, _ = get_ai_settings(cfg)
+    model_name = format_model_name(provider, model)
     recipient = reject_header_injection(
         cfg.get("email", "recipient"), "recipient"
     )
@@ -884,7 +940,11 @@ def send_email(
     msg.set_content(body_markdown)
     msg.add_alternative(
         render_email_html(
-            display_name, friendly_date(local_now), body_markdown, local_now
+            display_name,
+            friendly_date(local_now),
+            body_markdown,
+            local_now,
+            model_name,
         ),
         subtype="html",
     )
