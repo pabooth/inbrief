@@ -59,16 +59,10 @@ pipx uninstall inbrief
 
 ## Quick start
 
-Create the configuration directory and copy the example:
-
-```console
-mkdir -p ~/.config/inbrief
-cp config.example ~/.config/inbrief/inbrief.conf
-chmod 600 ~/.config/inbrief/inbrief.conf
-```
-
-Edit the file with your Gmail label IDs, sender, recipient, SMTP host, timezone,
-and digest preferences.
+On first use, `inbrief` or `inbrief-oauth` creates
+`~/.config/inbrief/config` from the bundled example if no existing
+configuration is present. Edit that file with your Gmail label IDs, sender,
+recipient, SMTP host, timezone, and digest preferences.
 
 Keep secrets out of the file where practical:
 
@@ -97,8 +91,9 @@ through Anthropic's Messages API, including Opus, as well as OpenAI Responses
 models such as `gpt-5.5` and DeepSeek models such as `deepseek-v4-flash` and
 `deepseek-v4-pro`.
 
-`INBRIEF_CONFIG` can specify a different configuration file. The original
-`~/.local/etc/inbrief.conf` location remains supported for compatibility.
+`INBRIEF_CONFIG` can specify a different configuration file. The previous
+`~/.config/inbrief/inbrief.conf` and original `~/.local/etc/inbrief.conf`
+locations remain supported for compatibility.
 
 ### Google OAuth
 
@@ -139,7 +134,7 @@ Useful options:
 ```console
 inbrief --dry-run
 inbrief --label Technology
-inbrief --config /path/to/inbrief.conf
+inbrief --config /path/to/config
 inbrief --version
 inbrief --help
 ```
@@ -156,9 +151,9 @@ variables.
 
 ## Security notes
 
-- Never commit `inbrief.conf`, OAuth client files, OAuth tokens, API keys, or
-  SMTP credentials. The included `.gitignore` excludes the common local
-  filenames.
+- Never commit `config`, `inbrief.conf`, OAuth client files, OAuth tokens, API
+  keys, or SMTP credentials. The included `.gitignore` excludes the common
+  local filenames.
 - Email bodies are untrusted input. InBrief separates them in the model prompt
   and escapes generated HTML, but prompt-injection risk cannot be eliminated
   entirely.
