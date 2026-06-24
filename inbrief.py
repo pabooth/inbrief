@@ -30,6 +30,7 @@ LEGACY_CONFIG_DIR = Path.home() / ".local" / "etc"
 DEFAULT_CONFIG_FILE = DEFAULT_CONFIG_DIR / "inbrief.conf"
 LEGACY_CONFIG_FILE = LEGACY_CONFIG_DIR / "inbrief.conf"
 GMAIL_READONLY_SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
+AI_PROVIDERS = {"anthropic", "deepseek", "openai"}
 
 logging.basicConfig(
     level=logging.INFO,
@@ -93,7 +94,7 @@ def load_config(path: Path | None = None) -> configparser.ConfigParser:
 def validate_config(cfg: configparser.ConfigParser) -> None:
     required = {
         "gmail": (),
-        "anthropic": (),
+        "ai": ("provider", "model"),
         "email": ("recipient", "sender"),
         "digest": (),
         "labels": (),
@@ -106,6 +107,13 @@ def validate_config(cfg: configparser.ConfigParser) -> None:
             if not cfg.get(section, option, fallback="").strip():
                 raise ValueError(f"Config value [{section}] {option} is required.")
 
+    provider, _, _, _ = get_ai_settings(cfg)
+    if provider not in cfg:
+        raise ValueError(
+            f"Config file is missing the [{provider}] section required by "
+            f"[ai] provider = {provider}."
+        )
+
     if not parse_labels(cfg):
         raise ValueError("At least one Gmail label must be configured in [labels].")
 
@@ -113,13 +121,43 @@ def validate_config(cfg: configparser.ConfigParser) -> None:
         ("gmail", "max_messages"),
         ("gmail", "max_threads"),
         ("gmail", "max_body_chars"),
-        ("anthropic", "max_tokens"),
+        ("ai", "max_tokens"),
         ("mail", "smtp_port"),
         ("mail", "timeout_seconds"),
     ):
         value = cfg.get(section, option, fallback="").strip()
         if value and int(value) <= 0:
             raise ValueError(f"Config value [{section}] {option} must be positive.")
+
+
+def get_ai_settings(
+    cfg: configparser.ConfigParser,
+) -> tuple[str, str, int, float]:
+    """Return provider, model, output token limit, and timeout."""
+    if "ai" not in cfg:
+        raise ValueError("Config file is missing an [ai] section.")
+
+    provider = cfg.get("ai", "provider", fallback="").strip().lower()
+    if not provider:
+        raise ValueError("Config value [ai] provider is required.")
+
+    if provider not in AI_PROVIDERS:
+        supported = ", ".join(sorted(AI_PROVIDERS))
+        raise ValueError(
+            f"Unknown AI provider {provider!r}; supported providers: {supported}."
+        )
+
+    model = cfg.get("ai", "model", fallback="").strip()
+    if not model:
+        raise ValueError("Config value [ai] model is required.")
+
+    max_tokens = cfg.getint("ai", "max_tokens", fallback=4096)
+    timeout = cfg.getfloat("ai", "timeout_seconds", fallback=120)
+    if max_tokens <= 0:
+        raise ValueError("AI max_tokens must be positive.")
+    if timeout <= 0:
+        raise ValueError("AI timeout_seconds must be positive.")
+    return provider, model, max_tokens, timeout
 
 
 def parse_labels(cfg: configparser.ConfigParser) -> list[tuple[str, str]]:
@@ -513,6 +551,33 @@ def generate_digest(
     display_name: str,
     emails: Sequence[dict[str, str]],
 ) -> str:
+    provider, model, max_tokens, timeout = get_ai_settings(cfg)
+    prompt = build_prompt(cfg, display_name, emails)
+
+    log.info(
+        "Generating digest for %r (%d message(s)) via %s/%s",
+        display_name,
+        len(emails),
+        provider,
+        model,
+    )
+
+    if provider == "anthropic":
+        return generate_anthropic_digest(
+            cfg, prompt, model, max_tokens, timeout
+        )
+    if provider == "openai":
+        return generate_openai_digest(cfg, prompt, model, max_tokens, timeout)
+    return generate_deepseek_digest(cfg, prompt, model, max_tokens, timeout)
+
+
+def generate_anthropic_digest(
+    cfg: configparser.ConfigParser,
+    prompt: str,
+    model: str,
+    max_tokens: int,
+    timeout: float,
+) -> str:
     try:
         import anthropic
     except ImportError as exc:
@@ -523,24 +588,11 @@ def generate_digest(
     api_key = get_secret(
         cfg, "anthropic", "api_key", "INBRIEF_ANTHROPIC_API_KEY"
     )
-    model = cfg.get("anthropic", "model", fallback="claude-sonnet-4-6")
-    max_tokens = cfg.getint("anthropic", "max_tokens", fallback=4096)
-    timeout = cfg.getfloat("anthropic", "timeout_seconds", fallback=120)
-
-    log.info(
-        "Generating digest for %r (%d message(s)) via %s",
-        display_name,
-        len(emails),
-        model,
-    )
     client = anthropic.Anthropic(api_key=api_key, timeout=timeout)
     message = client.messages.create(
         model=model,
         max_tokens=max_tokens,
-        temperature=0,
-        messages=[
-            {"role": "user", "content": build_prompt(cfg, display_name, emails)}
-        ],
+        messages=[{"role": "user", "content": prompt}],
     )
     text_blocks = [
         block.text for block in message.content if getattr(block, "type", "") == "text"
@@ -548,6 +600,82 @@ def generate_digest(
     if not text_blocks:
         raise RuntimeError("Anthropic returned no text content.")
     return "\n".join(text_blocks).strip()
+
+
+def generate_openai_digest(
+    cfg: configparser.ConfigParser,
+    prompt: str,
+    model: str,
+    max_tokens: int,
+    timeout: float,
+) -> str:
+    try:
+        from openai import OpenAI
+    except ImportError as exc:
+        raise RuntimeError(
+            "The OpenAI dependency is missing. Install the project first."
+        ) from exc
+
+    api_key = get_secret(cfg, "openai", "api_key", "INBRIEF_OPENAI_API_KEY")
+    client = OpenAI(api_key=api_key, timeout=timeout)
+    request: dict[str, Any] = {
+        "model": model,
+        "input": prompt,
+        "max_output_tokens": max_tokens,
+    }
+    reasoning_effort = cfg.get(
+        "openai", "reasoning_effort", fallback=""
+    ).strip()
+    if reasoning_effort:
+        request["reasoning"] = {"effort": reasoning_effort}
+
+    response = client.responses.create(**request)
+    text = getattr(response, "output_text", "")
+    if not text:
+        raise RuntimeError("OpenAI returned no text content.")
+    return text.strip()
+
+
+def generate_deepseek_digest(
+    cfg: configparser.ConfigParser,
+    prompt: str,
+    model: str,
+    max_tokens: int,
+    timeout: float,
+) -> str:
+    try:
+        from openai import OpenAI
+    except ImportError as exc:
+        raise RuntimeError(
+            "The OpenAI dependency used by DeepSeek is missing. "
+            "Install the project first."
+        ) from exc
+
+    api_key = get_secret(
+        cfg, "deepseek", "api_key", "INBRIEF_DEEPSEEK_API_KEY"
+    )
+    base_url = cfg.get(
+        "deepseek", "base_url", fallback="https://api.deepseek.com"
+    ).strip()
+    client = OpenAI(api_key=api_key, base_url=base_url, timeout=timeout)
+    request: dict[str, Any] = {
+        "model": model,
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": max_tokens,
+    }
+    thinking = cfg.get("deepseek", "thinking", fallback="").strip().lower()
+    if thinking:
+        if thinking not in {"enabled", "disabled"}:
+            raise ValueError(
+                "[deepseek] thinking must be enabled, disabled, or omitted."
+            )
+        request["extra_body"] = {"thinking": {"type": thinking}}
+
+    response = client.chat.completions.create(**request)
+    content = response.choices[0].message.content if response.choices else ""
+    if not content:
+        raise RuntimeError("DeepSeek returned no text content.")
+    return content.strip()
 
 
 def reject_header_injection(value: str, field: str) -> str:

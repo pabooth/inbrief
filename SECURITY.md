@@ -12,7 +12,8 @@ Only the latest released version receives security fixes.
 
 ## Data handling
 
-InBrief sends selected email content to the configured Anthropic API account and sends
-the generated digest through the configured SMTP server. Review those providers'
-privacy and retention terms before use. Email content is untrusted input: the prompt
-includes injection-resistant instructions, but no model-level defence is absolute.
+InBrief sends selected email content to the configured AI provider and sends the
+generated digest through the configured SMTP server. Review those providers'
+privacy and retention terms before use. Email content is untrusted input: the
+prompt includes injection-resistant instructions, but no model-level defence is
+absolute.

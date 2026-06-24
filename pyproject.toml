@@ -11,7 +11,7 @@ license = "MIT"
 license-files = ["LICENSE"]
 requires-python = ">=3.10"
 authors = [{ name = "Paul Booth" }]
-keywords = ["gmail", "email", "digest", "anthropic", "claude"]
+keywords = ["gmail", "email", "digest", "anthropic", "claude", "openai", "deepseek"]
 classifiers = [
   "Environment :: Console",
   "Programming Language :: Python :: 3",
@@ -24,6 +24,7 @@ classifiers = [
 ]
 dependencies = [
   "anthropic>=0.40,<1",
+  "openai>=2,<3",
   "google-api-python-client>=2.150,<3",
   "google-auth>=2.35,<3",
   "google-auth-oauthlib>=1.2,<2",
