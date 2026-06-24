@@ -50,6 +50,24 @@ def test_oauth_cli_reports_package_version(capsys):
     )
 
 
+def test_read_version_prefers_source_tree_version(monkeypatch, tmp_path):
+    version_file = tmp_path / "VERSION"
+    version_file.write_text("1.3.0\n", encoding="utf-8")
+    monkeypatch.setattr(inbrief, "__file__", str(tmp_path / "inbrief.py"))
+    monkeypatch.setattr(inbrief, "version", lambda _name: "1.2.0")
+
+    assert inbrief.read_version() == "1.3.0"
+
+
+def test_read_version_uses_package_metadata_when_version_file_is_absent(
+    monkeypatch, tmp_path
+):
+    monkeypatch.setattr(inbrief, "__file__", str(tmp_path / "inbrief.py"))
+    monkeypatch.setattr(inbrief, "version", lambda _name: "1.3.0")
+
+    assert inbrief.read_version() == "1.3.0"
+
+
 def test_default_config_path_prefers_current_then_previous_locations(
     monkeypatch, tmp_path
 ):
