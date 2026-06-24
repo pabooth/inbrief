@@ -22,7 +22,7 @@ api_key =
 [openai]
 # Prefer the INBRIEF_OPENAI_API_KEY environment variable.
 api_key =
-# Optional for GPT-5.5: none, low, medium, high, or xhigh
+# Optional: none, minimal, low, medium, high, or xhigh
 reasoning_effort =
 
 [deepseek]
