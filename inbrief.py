@@ -21,6 +21,7 @@ from email.utils import formataddr
 from html.parser import HTMLParser
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
+from string import Template
 from typing import Any
 from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -584,12 +585,12 @@ body { margin:0; padding:0; background:#edeae4;
 <div class="sheet">
 <div class="inner">
   <div class="header">
-    <div class="kicker">DISPLAY_NAME</div>
+    <div class="kicker">${DISPLAY_NAME}</div>
     <h1>The Daily Digest</h1>
-    <div class="dateline">DATE_FRIENDLY&nbsp; · &nbsp;Compiled TIME_FRIENDLY</div>
+    <div class="dateline">${DATE_FRIENDLY}&nbsp; · &nbsp;Compiled ${TIME_FRIENDLY}</div>
   </div>
   <div class="masthead-rule"></div>
-  <div class="content">BODY_HTML</div>
+  <div class="content">${BODY_HTML}</div>
   <div class="footer">
     <div>Compiled by InBrief</div>
     <div>Reply to suggest a topic · flag a correction</div>
@@ -599,11 +600,11 @@ body { margin:0; padding:0; background:#edeae4;
 </div>
 </body>
 </html>"""
-    return (
-        template.replace("DISPLAY_NAME", html.escape(display_name))
-        .replace("DATE_FRIENDLY", html.escape(date_friendly))
-        .replace("BODY_HTML", body_html)
-        .replace("TIME_FRIENDLY", html.escape(now.strftime("%H:%M %Z")))
+    return Template(template).substitute(
+        DISPLAY_NAME=html.escape(display_name),
+        DATE_FRIENDLY=html.escape(date_friendly),
+        TIME_FRIENDLY=html.escape(now.strftime("%H:%M %Z")),
+        BODY_HTML=body_html,
     )
 
 
