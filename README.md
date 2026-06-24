@@ -16,23 +16,46 @@ digest, and sends one digest per label by email.
 ## Requirements
 
 - Python 3.10 or newer
+- [pipx](https://pipx.pypa.io/) for an isolated command-line installation
 - A Google Cloud OAuth desktop client with the Gmail API enabled
 - An Anthropic, OpenAI, or DeepSeek API key
 - An SMTP account
 
 ## Installation
 
-Clone the repository and install it in a virtual environment:
+Install the latest released version in its own managed environment:
 
 ```console
-git clone https://github.com/pabooth/inbrief.git
-cd inbrief
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install .
+pipx install "git+https://github.com/pabooth/inbrief.git@v1.1.0"
 ```
 
-For development, use `python -m pip install -e ".[dev]"`.
+If `pipx` is not already installed on macOS:
+
+```console
+brew install pipx
+pipx ensurepath
+```
+
+On other platforms, follow the
+[pipx installation instructions](https://pipx.pypa.io/stable/installation/).
+You may need to open a new terminal after running `pipx ensurepath`.
+
+`pipx` keeps InBrief and its Python dependencies out of the system Python
+environment. It normally stores the environment under
+`~/.local/share/pipx/venvs/inbrief/` and exposes `inbrief` and
+`inbrief-oauth` through `~/.local/bin/`.
+
+To install a newer release, replace `X.Y.Z` below with the released version:
+
+```console
+pipx install --force "git+https://github.com/pabooth/inbrief.git@vX.Y.Z"
+```
+
+To remove InBrief:
+
+```console
+pipx uninstall inbrief
+```
 
 ## Quick start
 
@@ -127,7 +150,8 @@ later labels from being processed; the command exits non-zero if any label
 fails.
 
 For unattended operation, invoke `inbrief` from cron, systemd, launchd, or
-another scheduler. Ensure the scheduler receives the required environment
+another scheduler. Use `command -v inbrief` to find its absolute path for the
+scheduler, and ensure the scheduler receives the required environment
 variables.
 
 ## Security notes
@@ -146,10 +170,19 @@ variables.
 ## Development
 
 ```console
+git clone https://github.com/pabooth/inbrief.git
+cd inbrief
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e ".[dev]"
 ruff check .
 pytest
 python -m build
 ```
+
+The editable installation keeps the `inbrief` and `inbrief-oauth` commands
+linked to the checked-out source. Reactivate `.venv` in each new terminal
+before running development commands.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [SECURITY.md](SECURITY.md), and
 [SUPPORT.md](SUPPORT.md).

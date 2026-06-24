@@ -21,6 +21,7 @@ from email.utils import formataddr
 from html.parser import HTMLParser
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
+from string import Template
 from typing import Any
 from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -417,7 +418,10 @@ def safe_link(match: re.Match[str]) -> str:
         return link_text
     return (
         f'<a href="{html.escape(url, quote=True)}" '
-        f'style="color:#2a6ebb; white-space:nowrap;">{link_text}</a>'
+        'target="_blank" rel="noopener" '
+        'style="color:#6b665c; text-decoration:none; '
+        'border-bottom:1px solid #cfc8ba;">'
+        f"{link_text}</a>"
     )
 
 
@@ -434,31 +438,71 @@ def markdown_inline(value: str) -> str:
 def markdown_to_html(text: str) -> str:
     html_lines: list[str] = []
     paragraph: list[str] = []
+    list_type: str | None = None
+    list_index = 0
 
     def close_paragraph() -> None:
         if paragraph:
             html_lines.append(f"<p>{' '.join(paragraph)}</p>")
             paragraph.clear()
 
+    def close_list() -> None:
+        nonlocal list_index, list_type
+        if list_type:
+            html_lines.append(f"</{list_type}>")
+            list_type = None
+            list_index = 0
+
+    def open_list(kind: str) -> None:
+        nonlocal list_index, list_type
+        close_paragraph()
+        if list_type != kind:
+            close_list()
+            html_lines.append(f"<{kind}>")
+            list_type = kind
+            list_index = 0
+
     for line in text.splitlines():
         stripped = line.strip()
         if stripped.startswith("### "):
             close_paragraph()
+            close_list()
             html_lines.append(f"<h3>{markdown_inline(stripped[4:])}</h3>")
         elif stripped.startswith("## "):
             close_paragraph()
+            close_list()
             html_lines.append(f"<h2>{markdown_inline(stripped[3:])}</h2>")
         elif stripped.startswith("# "):
             close_paragraph()
+            close_list()
             html_lines.append(f"<h1>{markdown_inline(stripped[2:])}</h1>")
         elif stripped in {"---", "***", "___"}:
             close_paragraph()
+            close_list()
             html_lines.append("<hr>")
+        elif re.match(r"^[-*]\s+", stripped):
+            open_list("ul")
+            item = re.sub(r"^[-*]\s+", "", stripped)
+            html_lines.append(
+                '<li><span class="glance-mark">—</span>'
+                f'<span class="item-body">{markdown_inline(item)}</span></li>'
+            )
+        elif re.match(r"^\d+\.\s+", stripped):
+            open_list("ol")
+            list_index += 1
+            item = re.sub(r"^\d+\.\s+", "", stripped)
+            html_lines.append(
+                f'<li><span class="story-number">{list_index:02d}</span>'
+                f'<span class="item-body">{markdown_inline(item)}</span></li>'
+            )
         elif not stripped:
             close_paragraph()
+            close_list()
         else:
+            close_list()
             paragraph.append(markdown_inline(stripped))
     close_paragraph()
+    close_list()
     return "\n".join(html_lines)
 
 
@@ -471,46 +515,96 @@ def render_email_html(
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link
+  href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&amp;family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&amp;display=swap"
+  rel="stylesheet">
 <style>
-body { margin:0; padding:0; background:#f4f4f4;
-  font-family:Georgia,'Times New Roman',serif; color:#222; }
-.wrapper { max-width:680px; margin:32px auto; background:#fff;
-  border-radius:4px; overflow:hidden; }
-.header { background:#1a1a2e; padding:28px 36px; }
-.header h1 { font-size:32px; font-weight:normal; color:#fff; margin:0;
-  line-height:1.4; }
-.header .date { font-family:'Helvetica Neue',Arial,sans-serif; font-size:16px;
-  color:#fff; margin:8px 0 0; }
-.content { padding:16px 36px 40px; }
-.content h2 { font-size:18px; color:#1a1a2e; margin:28px 0 6px;
-  padding-bottom:4px; border-bottom:1px solid #e8e8e8; }
-.content h3 { font:700 15px 'Helvetica Neue',Arial,sans-serif; color:#1a1a2e;
-  margin:24px 0 4px; text-transform:uppercase; }
-.content p { font-size:15px; line-height:1.7; color:#333; margin:0 0 14px; }
-.content hr { border:0; border-top:1px solid #e8e8e8; margin:28px 0; }
-.content code { font-family:'Courier New',monospace; font-size:13px;
-  background:#f4f4f4; padding:1px 4px; }
-.content a { color:#2a6ebb; text-decoration:none; }
-.footer { background:#f9f9f9; border-top:1px solid #e8e8e8;
-  padding:16px 36px; font:11px 'Helvetica Neue',Arial,sans-serif; color:#777; }
+body { margin:0; padding:0; background:#edeae4;
+  font-family:Helvetica,Arial,sans-serif; color:#1c1a16; }
+.page { width:100%; background:#edeae4; padding:56px 20px; }
+.sheet { width:100%; max-width:760px; margin:0 auto; background:#fdfbf7;
+  box-shadow:0 1px 2px rgba(40,30,20,.06),0 18px 50px rgba(40,30,20,.10); }
+.inner { padding:64px 72px 56px; }
+.header { text-align:center; border-bottom:3px double #1c1a16;
+  padding-bottom:22px; margin-bottom:8px; }
+.kicker { margin-bottom:14px; color:#9a2d27;
+  font:500 11px 'IBM Plex Mono','Courier New',monospace;
+  letter-spacing:.32em; text-transform:uppercase; }
+.header h1 { margin:0; color:#1c1a16;
+  font:500 58px/.98 Newsreader,Georgia,'Times New Roman',serif;
+  letter-spacing:-.01em; }
+.dateline { margin-top:18px; color:#6b665c;
+  font:400 11px 'IBM Plex Mono','Courier New',monospace;
+  letter-spacing:.14em; line-height:1.6; text-transform:uppercase; }
+.masthead-rule { border-bottom:1px solid #1c1a16; margin-bottom:34px; }
+.content h1 { margin:0 0 24px; color:#1c1a16;
+  font:500 30px Newsreader,Georgia,'Times New Roman',serif; }
+.content h2 { margin:38px 0 20px; padding-bottom:8px;
+  border-bottom:1px solid #d8d2c6; color:#1c1a16;
+  font:500 25px Newsreader,Georgia,'Times New Roman',serif;
+  letter-spacing:-.01em; }
+.content h2:first-child { margin-top:0; border:0; padding:0; color:#9a2d27;
+  font:500 11px 'IBM Plex Mono','Courier New',monospace;
+  letter-spacing:.22em; text-transform:uppercase; }
+.content h3 { margin:24px 0 6px; color:#1c1a16;
+  font:500 19px Newsreader,Georgia,'Times New Roman',serif; }
+.content p { margin:0 0 16px; color:#2a2620;
+  font:400 18px/1.5 Newsreader,Georgia,'Times New Roman',serif; }
+.content ul { list-style:none; margin:0 0 42px; padding:0; }
+.content ul li { position:relative; margin:0 0 11px; padding-left:26px;
+  color:#2a2620; font:400 18px/1.45 Newsreader,Georgia,'Times New Roman',serif; }
+.content .glance-mark { position:absolute; left:0; top:0;
+  color:#9a2d27; font-weight:600; }
+.content ol { margin:0 0 38px; padding:0; list-style:none; }
+.content ol li { position:relative; margin:0 0 22px; padding-left:40px;
+  color:#1c1a16;
+  font:400 18px/1.5 Newsreader,Georgia,'Times New Roman',serif; }
+.content .story-number { position:absolute; left:0; top:3px; color:#9a2d27;
+  font:400 13px 'IBM Plex Mono','Courier New',monospace; }
+.content hr { border:0; border-top:1px solid #d8d2c6; margin:38px 0; }
+.content strong { font-weight:600; }
+.content code { padding:1px 4px; background:#f1eee8;
+  font:13px 'Courier New',monospace; }
+.content a { color:#6b665c; text-decoration:none;
+  border-bottom:1px solid #cfc8ba; }
+.footer { margin-top:46px; padding-top:20px; border-top:3px double #1c1a16;
+  text-align:center; color:#9a9387;
+  font:400 11px/1.7 'IBM Plex Mono','Courier New',monospace;
+  letter-spacing:.08em; }
+@media only screen and (max-width:720px) {
+  .page { padding:0 !important; }
+  .inner { padding:40px 22px !important; }
+  .header h1 { font-size:42px !important; }
+}
 </style>
 </head>
 <body>
-<div class="wrapper">
+<div class="page">
+<div class="sheet">
+<div class="inner">
   <div class="header">
-    <h1>DISPLAY_NAME</h1>
-    <p class="date">Digest for DATE_FRIENDLY</p>
+    <div class="kicker">${DISPLAY_NAME}</div>
+    <h1>The Daily Digest</h1>
+    <div class="dateline">${DATE_FRIENDLY}&nbsp; · &nbsp;Compiled ${TIME_FRIENDLY}</div>
   </div>
-  <div class="content">BODY_HTML</div>
-  <div class="footer">Generated DATE_TIME</div>
+  <div class="masthead-rule"></div>
+  <div class="content">${BODY_HTML}</div>
+  <div class="footer">
+    <div>Compiled by InBrief</div>
+    <div>Reply to suggest a topic · flag a correction</div>
+  </div>
+</div>
+</div>
 </div>
 </body>
 </html>"""
-    return (
-        template.replace("DISPLAY_NAME", html.escape(display_name))
-        .replace("DATE_FRIENDLY", html.escape(date_friendly))
-        .replace("BODY_HTML", body_html)
-        .replace("DATE_TIME", html.escape(now.strftime("%d %B %Y %H:%M %Z")))
+    return Template(template).substitute(
+        DISPLAY_NAME=html.escape(display_name),
+        DATE_FRIENDLY=html.escape(date_friendly),
+        TIME_FRIENDLY=html.escape(now.strftime("%H:%M %Z")),
+        BODY_HTML=body_html,
     )
 
 
@@ -534,13 +628,15 @@ infer information not present in the source emails.
 Requirements:
 - Cover the substantive stories in the source emails without inventing details.
 - Give particular emphasis to: {priorities}.
-- Use Markdown: ## for themes and ### for individual stories.
+- Begin with an `## At a glance` section containing 3 to 5 short bullet points.
+- After that, use `##` headings for themes and numbered Markdown lists for stories.
+- Make each numbered item a concise 1 to 2 sentence summary followed by a useful
+  source link where one is present.
 - Write concise prose and use **bold** sparingly for important names or terms.
 - Preserve useful source URLs as Markdown links.
 - Use a direct, unshowy register without motivational language or filler.
 - Do not use em dashes.
 - Identify the source newsletter in each story heading where useful.
-- Separate major sections with ---.
 - Do not add a title, date, or commentary about your process.
 
 Write the digest now."""
