@@ -5,19 +5,19 @@
 ![Version](https://img.shields.io/github/v/release/pabooth/inbrief)
 
 InBrief reads messages received during the previous 24 hours from selected Gmail
-labels, asks Claude to produce a concise digest, and sends one digest per label
-by email.
+labels, asks a configured Claude, OpenAI, or DeepSeek model to produce a concise
+digest, and sends one digest per label by email.
 
 > [!WARNING]
-> InBrief sends the contents of matching emails to Anthropic. Do not use it with
-> sensitive mail unless that data transfer is acceptable under your security,
-> privacy, and compliance requirements.
+> InBrief sends the contents of matching emails to the configured AI provider.
+> Do not use it with sensitive mail unless that data transfer is acceptable
+> under your security, privacy, and compliance requirements.
 
 ## Requirements
 
 - Python 3.10 or newer
 - A Google Cloud OAuth desktop client with the Gmail API enabled
-- An Anthropic API key
+- An Anthropic, OpenAI, or DeepSeek API key
 - An SMTP account
 
 ## Installation
@@ -51,9 +51,28 @@ Keep secrets out of the file where practical:
 
 ```console
 export INBRIEF_ANTHROPIC_API_KEY='...'
+export INBRIEF_OPENAI_API_KEY='...'
+export INBRIEF_DEEPSEEK_API_KEY='...'
 export INBRIEF_SMTP_USER='...'
 export INBRIEF_SMTP_PASSWORD='...'
 ```
+
+Only the API key for the configured provider is required. Select the provider
+and model in `[ai]`:
+
+```ini
+[ai]
+provider = anthropic
+model = claude-opus-4-8
+max_tokens = 4096
+timeout_seconds = 120
+```
+
+`provider` may be `anthropic`, `openai`, or `deepseek`. Model IDs are passed
+through without an allow-list. This supports every Claude model available
+through Anthropic's Messages API, including Opus, as well as OpenAI Responses
+models such as `gpt-5.5` and DeepSeek models such as `deepseek-v4-flash` and
+`deepseek-v4-pro`.
 
 `INBRIEF_CONFIG` can specify a different configuration file. The original
 `~/.local/etc/inbrief.conf` location remains supported for compatibility.
@@ -102,9 +121,10 @@ inbrief --version
 inbrief --help
 ```
 
-`--dry-run` still reads Gmail and calls Anthropic, but prints the digest instead
-of sending it through SMTP. A failed label does not prevent later labels from
-being processed; the command exits non-zero if any label fails.
+`--dry-run` still reads Gmail and calls the configured AI provider, but prints
+the digest instead of sending it through SMTP. A failed label does not prevent
+later labels from being processed; the command exits non-zero if any label
+fails.
 
 For unattended operation, invoke `inbrief` from cron, systemd, launchd, or
 another scheduler. Ensure the scheduler receives the required environment

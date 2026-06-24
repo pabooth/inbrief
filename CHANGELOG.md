@@ -8,6 +8,16 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- Provider-neutral AI configuration supporting all Claude model IDs, OpenAI
+  models including GPT-5.5, and DeepSeek models.
+
+### Changed
+
+- Removed the fixed Anthropic temperature parameter for compatibility with
+  Claude reasoning and Opus models.
+
 ## [1.1.0] - 2026-06-21
 
 ### Added

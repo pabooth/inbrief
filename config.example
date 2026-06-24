@@ -6,12 +6,31 @@ token_file = token.json
 max_messages = 20
 max_body_chars = 8000
 
-[anthropic]
-# Prefer the INBRIEF_ANTHROPIC_API_KEY environment variable.
-api_key =
+[ai]
+# anthropic, openai, or deepseek
+provider = anthropic
+# Any model ID supported by the selected provider. Examples:
+# claude-opus-4-8, claude-sonnet-4-6, gpt-5.5, deepseek-v4-flash
 model = claude-sonnet-4-6
 max_tokens = 4096
 timeout_seconds = 120
+
+[anthropic]
+# Prefer the INBRIEF_ANTHROPIC_API_KEY environment variable.
+api_key =
+
+[openai]
+# Prefer the INBRIEF_OPENAI_API_KEY environment variable.
+api_key =
+# Optional: none, minimal, low, medium, high, or xhigh
+reasoning_effort =
+
+[deepseek]
+# Prefer the INBRIEF_DEEPSEEK_API_KEY environment variable.
+api_key =
+base_url = https://api.deepseek.com
+# Optional: enabled or disabled. Omit to use the model default.
+thinking =
 
 [email]
 recipient = you@example.com
