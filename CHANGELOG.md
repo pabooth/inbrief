@@ -17,6 +17,10 @@ and this project adheres to
 
 - Removed the fixed Anthropic temperature parameter for compatibility with
   Claude reasoning and Opus models.
+- Documented isolated `pipx` installation for end users and a separate
+  project-local editable environment for development.
+- Restyled HTML digests with an editorial daily-newsletter template, including
+  an at-a-glance section, numbered stories, and responsive email presentation.
 
 ## [1.1.0] - 2026-06-21
 

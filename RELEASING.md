@@ -8,7 +8,8 @@ Releases are performed by a maintainer and follow
 1. Ensure `main` is current and all required checks pass.
 2. Move relevant entries from `CHANGELOG.md`'s `Unreleased` section into a
    section named `## [X.Y.Z] - YYYY-MM-DD`.
-3. Update `VERSION` and `pyproject.toml` to `X.Y.Z`.
+3. Update `VERSION`, `pyproject.toml`, and the version-pinned `pipx`
+   installation command in `README.md` to `X.Y.Z`.
 4. Open and merge a release pull request.
 
 After the release pull request is merged, update local `main`, create the tag,

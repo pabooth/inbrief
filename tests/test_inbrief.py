@@ -91,6 +91,28 @@ def test_markdown_renderer_escapes_raw_html_and_unsafe_link_text():
     assert "&lt;b&gt;this&lt;/b&gt;" in rendered
 
 
+def test_markdown_renderer_supports_digest_lists():
+    rendered = inbrief.markdown_to_html(
+        "## At a glance\n"
+        "- First takeaway\n"
+        "- Second takeaway\n\n"
+        "## Technology\n"
+        "1. **First story.** [Source](https://example.com/one)\n"
+        "2. Second story."
+    )
+
+    assert "<ul>" in rendered
+    assert '<span class="glance-mark">—</span>' in rendered
+    assert '<span class="item-body">First takeaway</span>' in rendered
+    assert "</ul>" in rendered
+    assert "<ol>" in rendered
+    assert '<span class="story-number">01</span>' in rendered
+    assert '<span class="story-number">02</span>' in rendered
+    assert '<span class="item-body"><strong>First story.</strong>' in rendered
+    assert 'target="_blank" rel="noopener"' in rendered
+    assert "</ol>" in rendered
+
+
 def test_email_template_escapes_dynamic_values():
     rendered = inbrief.render_email_html(
         "<script>label</script>",
@@ -101,6 +123,16 @@ def test_email_template_escapes_dynamic_values():
     assert "<script>label</script>" not in rendered
     assert "&lt;script&gt;label&lt;/script&gt;" in rendered
     assert "body { margin:0" in rendered
+    assert "The Daily Digest" in rendered
+    assert "Compiled by InBrief" in rendered
+    assert "#9a2d27" in rendered
+
+
+def test_system_prompt_requests_daily_digest_structure():
+    prompt = inbrief.build_system_prompt(config())
+
+    assert "## At a glance" in prompt
+    assert "numbered Markdown lists for stories" in prompt
 
 
 def test_reject_header_injection():
