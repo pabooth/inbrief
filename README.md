@@ -26,7 +26,7 @@ digest, and sends one digest per label by email.
 Install the latest released version in its own managed environment:
 
 ```console
-pipx install "git+https://github.com/pabooth/inbrief.git@v1.2.0"
+pipx install "git+https://github.com/pabooth/inbrief.git"
 ```
 
 If `pipx` is not already installed on macOS:
@@ -90,6 +90,11 @@ through without an allow-list. This supports every Claude model available
 through Anthropic's Messages API, including Opus, as well as OpenAI Responses
 models such as `gpt-5.5` and DeepSeek models such as `deepseek-v4-flash` and
 `deepseek-v4-pro`.
+
+DeepSeek thinking mode defaults to disabled because reasoning tokens count
+against `max_tokens` and can consume the output budget before a digest is
+returned. Set `thinking = enabled` under `[deepseek]` and raise `max_tokens` if
+reasoning is required.
 
 `INBRIEF_CONFIG` can specify a different configuration file. The previous
 `~/.config/inbrief/inbrief.conf` and original `~/.local/etc/inbrief.conf`

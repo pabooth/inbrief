@@ -825,18 +825,36 @@ def generate_deepseek_digest(
         ],
         "max_tokens": max_tokens,
     }
-    thinking = cfg.get("deepseek", "thinking", fallback="").strip().lower()
-    if thinking:
-        if thinking not in {"enabled", "disabled"}:
-            raise ValueError(
-                "[deepseek] thinking must be enabled, disabled, or omitted."
-            )
-        request["extra_body"] = {"thinking": {"type": thinking}}
+    thinking = (
+        cfg.get("deepseek", "thinking", fallback="").strip().lower()
+        or "disabled"
+    )
+    if thinking not in {"enabled", "disabled"}:
+        raise ValueError("[deepseek] thinking must be enabled or disabled.")
+    request["extra_body"] = {"thinking": {"type": thinking}}
 
     response = client.chat.completions.create(**request)
-    content = response.choices[0].message.content if response.choices else ""
+    if not response.choices:
+        raise RuntimeError("DeepSeek returned no completion choices.")
+
+    choice = response.choices[0]
+    content = choice.message.content
     if not content:
-        raise RuntimeError("DeepSeek returned no text content.")
+        finish_reason = getattr(choice, "finish_reason", "unknown")
+        usage = getattr(response, "usage", None)
+        completion_details = getattr(usage, "completion_tokens_details", None)
+        reasoning_tokens = getattr(completion_details, "reasoning_tokens", None)
+        details = f"finish_reason={finish_reason}"
+        if reasoning_tokens is not None:
+            details += f", reasoning_tokens={reasoning_tokens}"
+        hint = (
+            " Increase [ai] max_tokens or set [deepseek] thinking = disabled."
+            if finish_reason == "length"
+            else ""
+        )
+        raise RuntimeError(
+            f"DeepSeek returned no final text content ({details}).{hint}"
+        )
     return content.strip()
 
 

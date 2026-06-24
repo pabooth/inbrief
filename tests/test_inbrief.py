@@ -456,3 +456,61 @@ def test_deepseek_digest_uses_openai_compatible_api(monkeypatch):
             "extra_body": {"thinking": {"type": "disabled"}},
         }
     ]
+
+
+def test_deepseek_digest_disables_thinking_by_default(monkeypatch):
+    calls = []
+
+    class FakeCompletions:
+        def create(self, **kwargs):
+            calls.append(kwargs)
+            message = SimpleNamespace(content="DeepSeek digest")
+            return SimpleNamespace(choices=[SimpleNamespace(message=message)])
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            self.chat = SimpleNamespace(completions=FakeCompletions())
+
+    monkeypatch.setitem(
+        sys.modules, "openai", SimpleNamespace(OpenAI=FakeOpenAI)
+    )
+    cfg = config()
+    cfg["deepseek"] = {"api_key": "test-key", "thinking": ""}
+
+    result = inbrief.generate_deepseek_digest(
+        cfg, "instructions", "prompt", "deepseek-v4-pro", 4096, 120
+    )
+
+    assert result == "DeepSeek digest"
+    assert calls[0]["extra_body"] == {"thinking": {"type": "disabled"}}
+
+
+def test_deepseek_digest_reports_reasoning_token_exhaustion(monkeypatch):
+    class FakeCompletions:
+        def create(self, **kwargs):
+            message = SimpleNamespace(content="")
+            choice = SimpleNamespace(message=message, finish_reason="length")
+            details = SimpleNamespace(reasoning_tokens=4096)
+            usage = SimpleNamespace(completion_tokens_details=details)
+            return SimpleNamespace(choices=[choice], usage=usage)
+
+    class FakeOpenAI:
+        def __init__(self, **kwargs):
+            self.chat = SimpleNamespace(completions=FakeCompletions())
+
+    monkeypatch.setitem(
+        sys.modules, "openai", SimpleNamespace(OpenAI=FakeOpenAI)
+    )
+    cfg = config()
+    cfg["deepseek"] = {
+        "api_key": "test-key",
+        "thinking": "enabled",
+    }
+
+    with pytest.raises(
+        RuntimeError,
+        match=r"finish_reason=length, reasoning_tokens=4096",
+    ):
+        inbrief.generate_deepseek_digest(
+            cfg, "instructions", "prompt", "deepseek-v4-pro", 4096, 120
+        )

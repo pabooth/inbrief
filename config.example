@@ -29,8 +29,9 @@ reasoning_effort =
 # Prefer the INBRIEF_DEEPSEEK_API_KEY environment variable.
 api_key =
 base_url = https://api.deepseek.com
-# Optional: enabled or disabled. Omit to use the model default.
-thinking =
+# Optional: enabled or disabled. InBrief defaults to disabled so reasoning
+# cannot consume the output budget before the digest is generated.
+thinking = disabled
 
 [email]
 recipient = you@example.com

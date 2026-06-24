@@ -7,9 +7,11 @@ and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-## [1.2.0] - 2026-06-24
 
+### Fixed
 
+- Disabled DeepSeek thinking mode by default so reasoning cannot exhaust the
+  completion token budget before final digest content is returned.
 
 ## [1.2.0] - 2026-06-24
 
