@@ -7,6 +7,11 @@ and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [1.2.0] - 2026-06-24
+
+
+
+## [1.2.0] - 2026-06-24
 
 ### Added
 
@@ -58,5 +63,7 @@ and this project adheres to
 - Security controls for credentials, generated HTML, and email headers.
 - Automated tests, linting, packaging, and dependency updates.
 
-[Unreleased]: https://github.com/pabooth/inbrief/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/pabooth/inbrief/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/pabooth/inbrief/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/pabooth/inbrief/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/pabooth/inbrief/releases/tag/v1.0.0
