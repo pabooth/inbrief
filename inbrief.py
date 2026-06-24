@@ -53,14 +53,17 @@ log = logging.getLogger(APP_NAME)
 
 
 def read_version() -> str:
-    """Return installed package metadata, falling back for source-tree use."""
+    """Return the source-tree version, or installed package metadata."""
+    version_file = Path(__file__).with_name("VERSION")
+    try:
+        return version_file.read_text().strip()
+    except OSError:
+        pass
+
     try:
         return version(APP_NAME)
     except PackageNotFoundError:
-        try:
-            return Path(__file__).with_name("VERSION").read_text().strip()
-        except OSError:
-            return "unknown"
+        return "unknown"
 
 
 def default_config_path() -> Path:
