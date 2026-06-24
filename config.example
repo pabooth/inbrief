@@ -1,4 +1,4 @@
-# Copy to ~/.config/inbrief/inbrief.conf and run: chmod 600 ~/.config/inbrief/inbrief.conf
+# Installed automatically as ~/.config/inbrief/config on first use.
 
 [gmail]
 client_secrets_file = credentials.json

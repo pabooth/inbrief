@@ -9,6 +9,7 @@ build/
 dist/
 
 # Local configuration and credentials
+config
 inbrief.conf
 credentials.json
 token.json

@@ -12,15 +12,24 @@ and this project adheres to
 
 - Provider-neutral AI configuration supporting all Claude model IDs, OpenAI
   models including GPT-5.5, and DeepSeek models.
+- Automatic installation of the bundled example configuration on first use.
 
 ### Changed
 
+- Renamed the default configuration file to `~/.config/inbrief/config`, while
+  retaining support for previous locations.
 - Removed the fixed Anthropic temperature parameter for compatibility with
   Claude reasoning and Opus models.
 - Documented isolated `pipx` installation for end users and a separate
   project-local editable environment for development.
 - Restyled HTML digests with an editorial daily-newsletter template, including
   an at-a-glance section, numbered stories, and responsive email presentation.
+
+### Fixed
+
+- Ensured `provider = deepseek` dispatches to DeepSeek and reads
+  `INBRIEF_DEEPSEEK_API_KEY` or `[deepseek] api_key`, rather than requesting
+  Anthropic credentials.
 
 ## [1.1.0] - 2026-06-21
 

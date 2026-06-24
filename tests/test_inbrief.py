@@ -50,6 +50,51 @@ def test_oauth_cli_reports_package_version(capsys):
     )
 
 
+def test_default_config_path_prefers_current_then_previous_locations(
+    monkeypatch, tmp_path
+):
+    monkeypatch.delenv("INBRIEF_CONFIG", raising=False)
+    current = tmp_path / "current" / "config"
+    previous = tmp_path / "current" / "inbrief.conf"
+    legacy = tmp_path / "legacy" / "inbrief.conf"
+    monkeypatch.setattr(inbrief, "DEFAULT_CONFIG_FILE", current)
+    monkeypatch.setattr(inbrief, "PREVIOUS_CONFIG_FILE", previous)
+    monkeypatch.setattr(inbrief, "LEGACY_CONFIG_FILE", legacy)
+
+    assert inbrief.default_config_path() == current
+    legacy.parent.mkdir()
+    legacy.touch()
+    assert inbrief.default_config_path() == legacy
+    previous.parent.mkdir()
+    previous.touch()
+    assert inbrief.default_config_path() == previous
+    current.touch()
+    assert inbrief.default_config_path() == current
+
+
+def test_install_example_config_copies_only_when_default_is_missing(
+    monkeypatch, tmp_path
+):
+    example = tmp_path / "config.example"
+    example.write_text("[example]\nvalue = yes\n", encoding="utf-8")
+    target = tmp_path / "home" / "config"
+    monkeypatch.setattr(inbrief, "DEFAULT_CONFIG_FILE", target)
+    monkeypatch.setattr(inbrief, "__file__", str(tmp_path / "inbrief.py"))
+
+    inbrief.install_example_config(target)
+
+    assert target.read_text(encoding="utf-8") == example.read_text(encoding="utf-8")
+    assert target.stat().st_mode & 0o777 == 0o600
+
+    target.write_text("existing\n", encoding="utf-8")
+    inbrief.install_example_config(target)
+    assert target.read_text(encoding="utf-8") == "existing\n"
+
+    custom = tmp_path / "custom"
+    inbrief.install_example_config(custom)
+    assert not custom.exists()
+
+
 def test_ordinal_handles_teens():
     assert [inbrief.ordinal(value) for value in (1, 2, 3, 4, 11, 12, 13, 21)] == [
         "st",
@@ -329,6 +374,38 @@ def test_validate_config_rejects_invalid_openai_reasoning_effort():
 
     with pytest.raises(ValueError, match=r"reasoning_effort 'extreme'"):
         inbrief.validate_config(cfg)
+
+
+def test_generate_digest_dispatches_deepseek_provider(monkeypatch):
+    calls = []
+
+    def fake_deepseek(*args):
+        calls.append(args)
+        return "DeepSeek digest"
+
+    def reject_anthropic(*args):
+        raise AssertionError("Anthropic must not handle a DeepSeek model")
+
+    monkeypatch.setattr(inbrief, "build_system_prompt", lambda cfg: "instructions")
+    monkeypatch.setattr(
+        inbrief, "build_prompt", lambda cfg, display_name, emails: "prompt"
+    )
+    monkeypatch.setattr(inbrief, "generate_anthropic_digest", reject_anthropic)
+    monkeypatch.setattr(inbrief, "generate_deepseek_digest", fake_deepseek)
+    cfg = config()
+    cfg["ai"] = {"provider": "deepseek", "model": "deepseek-v4-pro"}
+    cfg["deepseek"] = {}
+
+    result = inbrief.generate_digest(
+        cfg,
+        "Technology",
+        [{"subject": "News", "sender": "sender", "body": "body"}],
+    )
+
+    assert result == "DeepSeek digest"
+    assert calls == [
+        (cfg, "instructions", "prompt", "deepseek-v4-pro", 4096, 120.0)
+    ]
 
 
 def test_deepseek_digest_uses_openai_compatible_api(monkeypatch):

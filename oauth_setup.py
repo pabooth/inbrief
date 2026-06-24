@@ -11,6 +11,7 @@ from pathlib import Path
 from inbrief import (
     GMAIL_READONLY_SCOPE,
     default_config_path,
+    install_example_config,
     load_config,
     read_version,
     resolve_config_path,
@@ -46,6 +47,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 2
 
     try:
+        install_example_config(args.config)
         cfg = load_config(args.config)
         client_secrets = args.client_secrets or resolve_config_path(
             cfg,

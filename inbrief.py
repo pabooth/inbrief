@@ -11,6 +11,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import smtplib
 import ssl
 import sys
@@ -29,7 +30,8 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 APP_NAME = "inbrief"
 DEFAULT_CONFIG_DIR = Path.home() / ".config" / APP_NAME
 LEGACY_CONFIG_DIR = Path.home() / ".local" / "etc"
-DEFAULT_CONFIG_FILE = DEFAULT_CONFIG_DIR / "inbrief.conf"
+DEFAULT_CONFIG_FILE = DEFAULT_CONFIG_DIR / "config"
+PREVIOUS_CONFIG_FILE = DEFAULT_CONFIG_DIR / "inbrief.conf"
 LEGACY_CONFIG_FILE = LEGACY_CONFIG_DIR / "inbrief.conf"
 GMAIL_READONLY_SCOPE = "https://www.googleapis.com/auth/gmail.readonly"
 AI_PROVIDERS = {"anthropic", "deepseek", "openai"}
@@ -62,13 +64,37 @@ def read_version() -> str:
 
 
 def default_config_path() -> Path:
-    """Prefer the XDG-style path, while retaining the original path."""
+    """Prefer the current path, while retaining previous locations."""
     configured = os.environ.get("INBRIEF_CONFIG")
     if configured:
         return Path(configured).expanduser()
-    if DEFAULT_CONFIG_FILE.exists() or not LEGACY_CONFIG_FILE.exists():
-        return DEFAULT_CONFIG_FILE
-    return LEGACY_CONFIG_FILE
+    for path in (DEFAULT_CONFIG_FILE, PREVIOUS_CONFIG_FILE, LEGACY_CONFIG_FILE):
+        if path.exists():
+            return path
+    return DEFAULT_CONFIG_FILE
+
+
+def install_example_config(path: Path) -> None:
+    """Install the bundled example when the default config does not exist."""
+    if path != DEFAULT_CONFIG_FILE or path.exists():
+        return
+
+    example_paths = (
+        Path(__file__).with_name("config.example"),
+        Path(sys.prefix) / "share" / APP_NAME / "config.example",
+    )
+    example_path = next((item for item in example_paths if item.is_file()), None)
+    if example_path is None:
+        return
+
+    path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    try:
+        with example_path.open("rb") as source, path.open("xb") as destination:
+            shutil.copyfileobj(source, destination)
+        path.chmod(0o600)
+        log.info("Installed example configuration at %s", path)
+    except FileExistsError:
+        pass
 
 
 def load_config(path: Path | None = None) -> configparser.ConfigParser:
@@ -693,9 +719,11 @@ def generate_digest(
         return generate_openai_digest(
             cfg, instructions, prompt, model, max_tokens, timeout
         )
-    return generate_deepseek_digest(
-        cfg, instructions, prompt, model, max_tokens, timeout
-    )
+    if provider == "deepseek":
+        return generate_deepseek_digest(
+            cfg, instructions, prompt, model, max_tokens, timeout
+        )
+    raise AssertionError(f"Unhandled AI provider: {provider}")
 
 
 def generate_anthropic_digest(
@@ -923,6 +951,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         log.setLevel(logging.DEBUG)
 
     try:
+        install_example_config(args.config)
         cfg = load_config(args.config)
         labels = parse_labels(cfg)
         if args.label:

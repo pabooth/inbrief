@@ -50,6 +50,9 @@ Source = "https://github.com/pabooth/inbrief"
 [tool.setuptools]
 py-modules = ["inbrief", "oauth_setup"]
 
+[tool.setuptools.data-files]
+"share/inbrief" = ["config.example"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
