@@ -7,6 +7,14 @@ and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [1.3.0] - 2026-06-24
+Change the email template and footer
+
+
+### Added
+
+- Included the configured AI model's readable name in the email footer.
+
 ## [1.2.0] - 2026-06-24
 
 
