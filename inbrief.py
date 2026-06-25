@@ -626,7 +626,7 @@ body { margin:0; padding:0; background:#edeae4;
   font:500 25px Newsreader,Georgia,'Times New Roman',serif;
   letter-spacing:-.01em; }
 .content h2:first-child { margin-top:0; border:0; padding:0; color:#9a2d27;
-  font:500 20px 'IBM Plex Mono','Courier New',monospace; text-align:center;
+  font:500 15px 'IBM Plex Mono','Courier New',monospace; text-align:center;
   letter-spacing:.22em; text-transform:uppercase; }
 .content h3 { margin:24px 0 6px; color:#1c1a16;
   font:500 19px Newsreader,Georgia,'Times New Roman',serif; }
@@ -658,7 +658,7 @@ body { margin:0; padding:0; background:#edeae4;
   .sheet { box-shadow:none !important; }
   .inner { padding:40px 22px !important; }
   .header h1 { font-size:42px !important; }
-  .content ul li, .content ol li { padding-left:12px !important; }
+  .content ul li, .content ol li { padding-left:0 !important; }
 }
 </style>
 </head>
