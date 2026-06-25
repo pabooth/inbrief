@@ -7,6 +7,9 @@ and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [1.3.5] - 2026-06-25
+Changes to the email template to make it more readable on mobile, and spacing changes on desktop.
+
 ## [1.3.4] - 2026-06-25
 More formatting changes to the email template.
 
