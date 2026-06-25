@@ -165,12 +165,13 @@ def test_markdown_renderer_supports_digest_lists():
     )
 
     assert "<ul>" in rendered
-    assert '<span class="glance-mark">—</span>' in rendered
+    assert '<span class="glance-mark">•</span>' in rendered
+    assert '<span class="glance-mark">—</span>' not in rendered
     assert '<span class="item-body">First takeaway</span>' in rendered
     assert "</ul>" in rendered
     assert "<ol>" in rendered
-    assert '<span class="story-number">01</span>' in rendered
-    assert '<span class="story-number">02</span>' in rendered
+    assert '<span class="story-number">01&nbsp;&nbsp;</span>' in rendered
+    assert '<span class="story-number">02&nbsp;&nbsp;</span>' in rendered
     assert '<span class="item-body"><strong>First story.</strong>' in rendered
     assert 'target="_blank" rel="noopener"' in rendered
     assert "</ol>" in rendered
@@ -188,7 +189,11 @@ def test_email_template_escapes_dynamic_values():
     assert "&lt;script&gt;label&lt;/script&gt;" in rendered
     assert "body { margin:0" in rendered
     assert "The Daily Digest" in rendered
+    assert '<div class="dateline">Today</div>' in rendered
+    assert "Compiled 00:00 UTC" not in rendered
     assert "Compiled by InBrief &amp; Claude Sonnet 4.8" in rendered
+    assert "Reply to suggest a topic" not in rendered
+    assert "flag a correction" not in rendered
     assert "#9a2d27" in rendered
 
 
