@@ -526,7 +526,6 @@ def markdown_to_html(text: str) -> str:
             )
         elif not stripped:
             close_paragraph()
-            close_list()
         else:
             close_list()
             paragraph.append(markdown_inline(stripped))
