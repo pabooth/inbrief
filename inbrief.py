@@ -513,7 +513,7 @@ def markdown_to_html(text: str) -> str:
             open_list("ul")
             item = re.sub(r"^[-*]\s+", "", stripped)
             html_lines.append(
-                '<li><span class="glance-mark">—</span>'
+                '<li><span class="glance-mark">•</span>'
                 f'<span class="item-body">{markdown_inline(item)}</span></li>'
             )
         elif re.match(r"^\d+\.\s+", stripped):
@@ -521,7 +521,7 @@ def markdown_to_html(text: str) -> str:
             list_index += 1
             item = re.sub(r"^\d+\.\s+", "", stripped)
             html_lines.append(
-                f'<li><span class="story-number">{list_index:02d}</span>'
+                f'<li><span class="story-number">{list_index:02d}&nbsp;&nbsp;</span>'
                 f'<span class="item-body">{markdown_inline(item)}</span></li>'
             )
         elif not stripped:
@@ -669,13 +669,12 @@ body { margin:0; padding:0; background:#edeae4;
   <div class="header">
     <div class="kicker">${DISPLAY_NAME}</div>
     <h1>The Daily Digest</h1>
-    <div class="dateline">${DATE_FRIENDLY}&nbsp; · &nbsp;Compiled ${TIME_FRIENDLY}</div>
+    <div class="dateline">${DATE_FRIENDLY}</div>
   </div>
   <div class="masthead-rule"></div>
   <div class="content">${BODY_HTML}</div>
   <div class="footer">
     <div>Compiled by InBrief &amp; ${MODEL_NAME}</div>
-    <div>Reply to suggest a topic · flag a correction</div>
   </div>
 </div>
 </div>
@@ -685,7 +684,6 @@ body { margin:0; padding:0; background:#edeae4;
     return Template(template).substitute(
         DISPLAY_NAME=html.escape(display_name),
         DATE_FRIENDLY=html.escape(date_friendly),
-        TIME_FRIENDLY=html.escape(now.strftime("%H:%M %Z")),
         BODY_HTML=body_html,
         MODEL_NAME=html.escape(model_name),
     )
