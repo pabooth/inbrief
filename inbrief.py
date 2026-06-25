@@ -468,7 +468,7 @@ def markdown_to_html(text: str) -> str:
     html_lines: list[str] = []
     paragraph: list[str] = []
     list_type: str | None = None
-    list_index = 0
+    story_index = 0
 
     def close_paragraph() -> None:
         if paragraph:
@@ -476,20 +476,18 @@ def markdown_to_html(text: str) -> str:
             paragraph.clear()
 
     def close_list() -> None:
-        nonlocal list_index, list_type
+        nonlocal list_type
         if list_type:
             html_lines.append(f"</{list_type}>")
             list_type = None
-            list_index = 0
 
     def open_list(kind: str) -> None:
-        nonlocal list_index, list_type
+        nonlocal list_type
         close_paragraph()
         if list_type != kind:
             close_list()
             html_lines.append(f"<{kind}>")
             list_type = kind
-            list_index = 0
 
     for line in text.splitlines():
         stripped = line.strip()
@@ -518,10 +516,10 @@ def markdown_to_html(text: str) -> str:
             )
         elif re.match(r"^\d+\.\s+", stripped):
             open_list("ol")
-            list_index += 1
+            story_index += 1
             item = re.sub(r"^\d+\.\s+", "", stripped)
             html_lines.append(
-                f'<li><span class="story-number">{list_index} </span>'
+                f'<li><span class="story-number">{story_index} </span>'
                 f'<span class="item-body">{markdown_inline(item)}</span></li>'
             )
         elif not stripped:
@@ -628,7 +626,7 @@ body { margin:0; padding:0; background:#edeae4;
   font:500 25px Newsreader,Georgia,'Times New Roman',serif;
   letter-spacing:-.01em; }
 .content h2:first-child { margin-top:0; border:0; padding:0; color:#9a2d27;
-  font:500 11px 'IBM Plex Mono','Courier New',monospace;
+  font:500 20px 'IBM Plex Mono','Courier New',monospace; text-align:center;
   letter-spacing:.22em; text-transform:uppercase; }
 .content h3 { margin:24px 0 6px; color:#1c1a16;
   font:500 19px Newsreader,Georgia,'Times New Roman',serif; }
