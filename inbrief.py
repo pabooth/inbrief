@@ -439,8 +439,7 @@ def fetch_emails_for_label(
     return emails
 
 
-def safe_link(match: re.Match[str]) -> str:
-    link_text, raw_url = match.groups()
+def render_safe_link(link_text: str, raw_url: str) -> str:
     url = html.unescape(raw_url)
     parsed = urlsplit(url)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
@@ -454,10 +453,24 @@ def safe_link(match: re.Match[str]) -> str:
     )
 
 
+def safe_link(match: re.Match[str]) -> str:
+    return render_safe_link(*match.groups())
+
+
+def attached_safe_link(match: re.Match[str]) -> str:
+    space, link_text, raw_url = match.groups()
+    separator = "&nbsp;" if space else ""
+    return separator + render_safe_link(link_text, raw_url)
+
+
 def markdown_inline(value: str) -> str:
     """Render the small supported Markdown subset without permitting raw HTML."""
     escaped = html.escape(value, quote=True)
-    escaped = re.sub(r"\[([^\]]+)\]\((https?://[^)\s]+)\)", safe_link, escaped)
+    escaped = re.sub(
+        r"(\s*)\[([^\]]+)\]\((https?://[^)\s]+)\)",
+        attached_safe_link,
+        escaped,
+    )
     escaped = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", escaped)
     escaped = re.sub(r"(?<!\*)\*([^*]+?)\*(?!\*)", r"<em>\1</em>", escaped)
     escaped = re.sub(r"`([^`]+?)`", r"<code>\1</code>", escaped)
@@ -618,14 +631,14 @@ body { margin:0; padding:0; background:#edeae4;
 .dateline { margin-top:18px; color:#6b665c;
   font:400 11px 'IBM Plex Mono','Courier New',monospace;
   letter-spacing:.14em; line-height:1.6; text-transform:uppercase; }
-.masthead-rule { border-bottom:1px solid #1c1a16; margin-bottom:34px; }
+.masthead-rule { border-bottom:1px solid #1c1a16; margin-bottom:0; }
 .content h1 { margin:0 0 24px; color:#1c1a16;
   font:500 30px Newsreader,Georgia,'Times New Roman',serif; }
 .content h2 { margin:38px 0 20px; padding-bottom:8px;
   border-bottom:1px solid #d8d2c6; color:#1c1a16;
   font:500 25px Newsreader,Georgia,'Times New Roman',serif;
   letter-spacing:-.01em; }
-.content h2:first-child { margin-top:0; border:0; padding:0; color:#9a2d27;
+.content h2:first-child { margin:0; border:0; padding:20px 0; color:#9a2d27;
   font:500 15px 'IBM Plex Mono','Courier New',monospace; text-align:center;
   letter-spacing:.22em; text-transform:uppercase; }
 .content h3 { margin:24px 0 6px; color:#1c1a16;
