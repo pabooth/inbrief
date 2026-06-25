@@ -26,7 +26,7 @@ digest, and sends one digest per label by email.
 Install the latest released version in its own managed environment:
 
 ```console
-pipx install "git+https://github.com/pabooth/inbrief.git@v1.3.3"
+pipx install "git+https://github.com/pabooth/inbrief.git@v1.3.4"
 ```
 
 If `pipx` is not already installed on macOS:
