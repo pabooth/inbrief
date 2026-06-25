@@ -521,7 +521,7 @@ def markdown_to_html(text: str) -> str:
             list_index += 1
             item = re.sub(r"^\d+\.\s+", "", stripped)
             html_lines.append(
-                f'<li><span class="story-number">{list_index:02d}&nbsp;&nbsp;</span>'
+                f'<li><span class="story-number">{list_index}</span>'
                 f'<span class="item-body">{markdown_inline(item)}</span></li>'
             )
         elif not stripped:
@@ -605,7 +605,8 @@ def render_email_html(
 <style>
 body { margin:0; padding:0; background:#edeae4;
   font-family:Helvetica,Arial,sans-serif; color:#1c1a16; }
-.page { width:100%; background:#edeae4; padding:56px 20px; }
+.page { width:100%; box-sizing:border-box; background:#edeae4;
+  padding:56px 0; }
 .sheet { width:100%; max-width:760px; margin:0 auto; background:#fdfbf7;
   box-shadow:0 1px 2px rgba(40,30,20,.06),0 18px 50px rgba(40,30,20,.10); }
 .inner { padding:64px 72px 56px; }
@@ -657,8 +658,10 @@ body { margin:0; padding:0; background:#edeae4;
   letter-spacing:.08em; }
 @media only screen and (max-width:720px) {
   .page { padding:0 !important; }
+  .sheet { box-shadow:none !important; }
   .inner { padding:40px 22px !important; }
   .header h1 { font-size:42px !important; }
+  .content ul li, .content ol li { padding-left:24px !important; }
 }
 </style>
 </head>

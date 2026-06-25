@@ -170,8 +170,9 @@ def test_markdown_renderer_supports_digest_lists():
     assert '<span class="item-body">First takeaway</span>' in rendered
     assert "</ul>" in rendered
     assert "<ol>" in rendered
-    assert '<span class="story-number">01&nbsp;&nbsp;</span>' in rendered
-    assert '<span class="story-number">02&nbsp;&nbsp;</span>' in rendered
+    assert '<span class="story-number">1</span>' in rendered
+    assert '<span class="story-number">2</span>' in rendered
+    assert "&nbsp;" not in rendered
     assert '<span class="item-body"><strong>First story.</strong>' in rendered
     assert 'target="_blank" rel="noopener"' in rendered
     assert "</ol>" in rendered
@@ -188,6 +189,13 @@ def test_email_template_escapes_dynamic_values():
     assert "<script>label</script>" not in rendered
     assert "&lt;script&gt;label&lt;/script&gt;" in rendered
     assert "body { margin:0" in rendered
+    assert "padding:56px 0;" in rendered
+    assert "padding:56px 20px;" not in rendered
+    assert ".sheet { box-shadow:none !important; }" in rendered
+    assert (
+        ".content ul li, .content ol li { padding-left:24px !important; }"
+        in rendered
+    )
     assert "The Daily Digest" in rendered
     assert '<div class="dateline">Today</div>' in rendered
     assert "Compiled 00:00 UTC" not in rendered
