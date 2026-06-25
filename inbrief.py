@@ -513,7 +513,7 @@ def markdown_to_html(text: str) -> str:
             open_list("ul")
             item = re.sub(r"^[-*]\s+", "", stripped)
             html_lines.append(
-                '<li><span class="glance-mark">•</span>'
+                '<li><span class="glance-mark">• </span>'
                 f'<span class="item-body">{markdown_inline(item)}</span></li>'
             )
         elif re.match(r"^\d+\.\s+", stripped):
@@ -521,7 +521,7 @@ def markdown_to_html(text: str) -> str:
             list_index += 1
             item = re.sub(r"^\d+\.\s+", "", stripped)
             html_lines.append(
-                f'<li><span class="story-number">{list_index}</span>'
+                f'<li><span class="story-number">{list_index} </span>'
                 f'<span class="item-body">{markdown_inline(item)}</span></li>'
             )
         elif not stripped:
@@ -641,7 +641,7 @@ body { margin:0; padding:0; background:#edeae4;
 .content .glance-mark { position:absolute; left:0; top:0;
   color:#9a2d27; font-weight:600; }
 .content ol { margin:0 0 38px; padding:0; list-style:none; }
-.content ol li { position:relative; margin:0 0 22px; padding-left:40px;
+.content ol li { position:relative; margin:0 0 22px; padding-left:28px;
   color:#1c1a16;
   font:400 18px/1.5 Newsreader,Georgia,'Times New Roman',serif; }
 .content .story-number { position:absolute; left:0; top:3px; color:#9a2d27;
@@ -661,7 +661,7 @@ body { margin:0; padding:0; background:#edeae4;
   .sheet { box-shadow:none !important; }
   .inner { padding:40px 22px !important; }
   .header h1 { font-size:42px !important; }
-  .content ul li, .content ol li { padding-left:24px !important; }
+  .content ul li, .content ol li { padding-left:12px !important; }
 }
 </style>
 </head>
