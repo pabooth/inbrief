@@ -45,7 +45,7 @@ environment. It normally stores the environment under
 `~/.local/share/pipx/venvs/inbrief/` and exposes `inbrief` and
 `inbrief-oauth` through `~/.local/bin/`.
 
-To install a newer release, replace `X.Y.Z` below with the released version:
+To install another release version, replace `X.Y.Z` below with the released version:
 
 ```console
 pipx install --force "git+https://github.com/pabooth/inbrief.git@vX.Y.Z"
