@@ -7,6 +7,9 @@ and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+## [1.3.6] - 2026-06-28
+Changes to the prompt and default max tokens to catch more news stories
+
 ## [1.3.5] - 2026-06-25
 Changes to the email template to make it more readable on mobile, and spacing changes on desktop.
 
