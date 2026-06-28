@@ -12,7 +12,7 @@ provider = anthropic
 # Any model ID supported by the selected provider. Examples:
 # claude-opus-4-8, claude-sonnet-4-6, gpt-5.5, deepseek-v4-flash
 model = claude-sonnet-4-6
-max_tokens = 4096
+max_tokens = 8192
 timeout_seconds = 120
 
 [anthropic]
