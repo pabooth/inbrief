@@ -345,12 +345,23 @@ def test_anthropic_digest_supports_opus_without_temperature(monkeypatch):
     calls = []
     clients = []
 
-    class FakeMessages:
-        def create(self, **kwargs):
-            calls.append(kwargs)
+    class FakeStream:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc_info):
+            return False
+
+        def get_final_message(self):
             return SimpleNamespace(
-                content=[SimpleNamespace(type="text", text="Claude digest")]
+                content=[SimpleNamespace(type="text", text="Claude digest")],
+                stop_reason="end_turn",
             )
+
+    class FakeMessages:
+        def stream(self, **kwargs):
+            calls.append(kwargs)
+            return FakeStream()
 
     class FakeAnthropic:
         def __init__(self, **kwargs):
