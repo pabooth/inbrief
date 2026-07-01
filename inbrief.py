@@ -654,7 +654,7 @@ body { margin:0; padding:0; background:#edeae4;
 .content ol li { position:relative; margin:0 0 22px; padding-left:28px;
   color:#1c1a16;
   font:400 18px/1.5 Newsreader,Georgia,'Times New Roman',serif; }
-.content .story-number { position:absolute; left:0; top:3px; color:#9a2d27;
+.content .story-number { position:absolute; left:0; top:2px; color:#9a2d27;
   font:400 .85em 'IBM Plex Mono','Courier New',monospace; }
 .content hr { border:0; border-top:1px solid #d8d2c6; margin:38px 0; }
 .content strong { font-weight:600; }
@@ -824,12 +824,19 @@ def generate_anthropic_digest(
         cfg, "anthropic", "api_key", "INBRIEF_ANTHROPIC_API_KEY"
     )
     client = anthropic.Anthropic(api_key=api_key, timeout=timeout)
-    message = client.messages.create(
+    with client.messages.stream(
         model=model,
         max_tokens=max_tokens,
         system=instructions,
         messages=[{"role": "user", "content": prompt}],
-    )
+    ) as stream:
+        message = stream.get_final_message()
+    if message.stop_reason == "max_tokens":
+        log.warning(
+            "Anthropic digest was truncated at the [ai] max_tokens limit "
+            "(%d); consider raising it.",
+            max_tokens,
+        )
     text_blocks = [
         block.text for block in message.content if getattr(block, "type", "") == "text"
     ]
