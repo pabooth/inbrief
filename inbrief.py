@@ -655,7 +655,7 @@ body { margin:0; padding:0; background:#edeae4;
   color:#1c1a16;
   font:400 18px/1.5 Newsreader,Georgia,'Times New Roman',serif; }
 .content .story-number { position:absolute; left:0; top:3px; color:#9a2d27;
-  font:400 13px 'IBM Plex Mono','Courier New',monospace; }
+  font:400 .85em 'IBM Plex Mono','Courier New',monospace; }
 .content hr { border:0; border-top:1px solid #d8d2c6; margin:38px 0; }
 .content strong { font-weight:600; }
 .content code { padding:1px 4px; background:#f1eee8;
