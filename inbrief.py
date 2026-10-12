@@ -477,19 +477,52 @@ def markdown_inline(value: str) -> str:
     return escaped
 
 
+BULLET_RE = re.compile(r"^[-*]\s+")
+NUMBER_RE = re.compile(r"^\d+\.\s+")
+MARKER_RE = re.compile(r"^(?:[-*]|\d+\.)\s+")
+
+
 def markdown_to_html(text: str) -> str:
     html_lines: list[str] = []
     paragraph: list[str] = []
+    item_text: list[str] = []
     list_type: str | None = None
+    nested_type: str | None = None
+    item_open = False
+    item_indent = 0
     story_index = 0
+    nested_index = 0
 
     def close_paragraph() -> None:
         if paragraph:
             html_lines.append(f"<p>{' '.join(paragraph)}</p>")
             paragraph.clear()
 
+    def flush_item_text() -> None:
+        """Emit the prose that continues the open list item, if any."""
+        if item_text:
+            html_lines.append(
+                f'<div class="item-text">{" ".join(item_text)}</div>'
+            )
+            item_text.clear()
+
+    def close_nested() -> None:
+        nonlocal nested_type
+        if nested_type:
+            html_lines.append(f"</{nested_type}>")
+            nested_type = None
+
+    def close_item() -> None:
+        nonlocal item_open
+        if item_open:
+            flush_item_text()
+            close_nested()
+            html_lines.append("</li>")
+            item_open = False
+
     def close_list() -> None:
         nonlocal list_type
+        close_item()
         if list_type:
             html_lines.append(f"</{list_type}>")
             list_type = None
@@ -497,13 +530,28 @@ def markdown_to_html(text: str) -> str:
     def open_list(kind: str) -> None:
         nonlocal list_type
         close_paragraph()
+        close_item()
         if list_type != kind:
             close_list()
             html_lines.append(f"<{kind}>")
             list_type = kind
 
+    def open_item(kind: str, item: str, marker: str) -> None:
+        mark_class = "glance-mark" if kind == "ul" else "story-number"
+        html_lines.append(
+            f'<li><span class="{mark_class}">{marker}</span>'
+            f'<span class="item-body">{markdown_inline(item)}</span>'
+        )
+
     for line in text.splitlines():
         stripped = line.strip()
+        indent = len(line) - len(line.lstrip())
+        # Lines indented past their list item continue that item rather than
+        # breaking out of the list.
+        continues_item = item_open and indent > item_indent
+        bullet = BULLET_RE.match(stripped)
+        number = NUMBER_RE.match(stripped)
+
         if stripped.startswith("### "):
             close_paragraph()
             close_list()
@@ -520,21 +568,29 @@ def markdown_to_html(text: str) -> str:
             close_paragraph()
             close_list()
             html_lines.append("<hr>")
-        elif re.match(r"^[-*]\s+", stripped):
-            open_list("ul")
-            item = re.sub(r"^[-*]\s+", "", stripped)
-            html_lines.append(
-                '<li><span class="glance-mark">• </span>'
-                f'<span class="item-body">{markdown_inline(item)}</span></li>'
-            )
-        elif re.match(r"^\d+\.\s+", stripped):
-            open_list("ol")
-            story_index += 1
-            item = re.sub(r"^\d+\.\s+", "", stripped)
-            html_lines.append(
-                f'<li><span class="story-number">{story_index} </span>'
-                f'<span class="item-body">{markdown_inline(item)}</span></li>'
-            )
+        elif bullet or number:
+            kind = "ul" if bullet else "ol"
+            item = MARKER_RE.sub("", stripped)
+            if continues_item:
+                flush_item_text()
+                if nested_type != kind:
+                    close_nested()
+                    html_lines.append(f'<{kind} class="item-list">')
+                    nested_type = kind
+                    nested_index = 0
+                nested_index += 1
+                open_item(kind, item, "• " if kind == "ul" else f"{nested_index} ")
+                html_lines.append("</li>")
+            else:
+                open_list(kind)
+                if kind == "ol":
+                    story_index += 1
+                open_item(kind, item, "• " if kind == "ul" else f"{story_index} ")
+                item_open = True
+                item_indent = indent
+        elif continues_item:
+            close_nested()
+            item_text.append(markdown_inline(stripped))
         elif not stripped:
             close_paragraph()
         else:
@@ -634,7 +690,7 @@ body { margin:0; padding:0; background:#edeae4;
 .masthead-rule { border-bottom:1px solid #1c1a16; margin-bottom:0; }
 .content h1 { margin:0 0 24px; color:#1c1a16;
   font:500 30px Newsreader,Georgia,'Times New Roman',serif; }
-.content h2 { margin:38px 0 20px; padding-bottom:8px;
+.content h2 { margin:34px 0 18px; padding-bottom:8px;
   border-bottom:1px solid #d8d2c6; color:#1c1a16;
   font:500 25px Newsreader,Georgia,'Times New Roman',serif;
   letter-spacing:-.01em; }
@@ -645,17 +701,23 @@ body { margin:0; padding:0; background:#edeae4;
   font:500 19px Newsreader,Georgia,'Times New Roman',serif; }
 .content p { margin:0 0 16px; color:#2a2620;
   font:400 18px/1.5 Newsreader,Georgia,'Times New Roman',serif; }
-.content ul { list-style:none; margin:0 0 42px; padding:0; }
+.content ul { list-style:none; margin:0 0 32px; padding:0; }
 .content ul li { position:relative; margin:0 0 11px; padding-left:26px;
   color:#2a2620; font:400 18px/1.45 Newsreader,Georgia,'Times New Roman',serif; }
 .content .glance-mark { position:absolute; left:0; top:0;
   color:#9a2d27; font-weight:600; }
-.content ol { margin:0 0 38px; padding:0; list-style:none; }
-.content ol li { position:relative; margin:0 0 22px; padding-left:28px;
+.content ol { margin:0 0 30px; padding:0; list-style:none; }
+.content ol li { position:relative; margin:0 0 24px; padding-left:28px;
   color:#1c1a16;
   font:400 18px/1.5 Newsreader,Georgia,'Times New Roman',serif; }
 .content .story-number { position:absolute; left:0; top:1.5px; color:#9a2d27;
   font:400 .85em 'IBM Plex Mono','Courier New',monospace; }
+.content .item-text { margin:4px 0 0; color:#2a2620;
+  font:400 18px/1.5 Newsreader,Georgia,'Times New Roman',serif; }
+.content .item-list + .item-text { margin-top:10px; }
+.content ul.item-list { margin:8px 0 0; }
+.content ul.item-list li { margin:0 0 7px; }
+.content ul.item-list li:last-child { margin-bottom:0; }
 .content hr { border:0; border-top:1px solid #d8d2c6; margin:38px 0; }
 .content strong { font-weight:600; }
 .content code { padding:1px 4px; background:#f1eee8;
@@ -672,6 +734,7 @@ body { margin:0; padding:0; background:#edeae4;
   .inner { padding:40px 22px !important; }
   .header h1 { font-size:42px !important; }
   .content ul li, .content ol li { padding-left:0 !important; }
+  .content .glance-mark, .content .story-number { position:static !important; }
 }
 </style>
 </head>
