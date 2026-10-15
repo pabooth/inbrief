@@ -193,6 +193,57 @@ def test_markdown_renderer_numbers_stories_across_separate_lists():
     assert '<span class="story-number">3 </span>' in rendered
 
 
+def test_markdown_renderer_keeps_story_body_inside_its_list_item():
+    rendered = inbrief.markdown_to_html(
+        "## Technology\n"
+        "1. **First story.**\n"
+        "   Body of the first story.\n"
+        "   More of the same paragraph.\n"
+        "2. **Second story.**\n"
+        "   Body of the second story."
+    )
+
+    # One list for the whole section, with each body inside its own item.
+    assert rendered.count("<ol>") == 1
+    assert rendered.count("</ol>") == 1
+    assert "</ol>\n<p>" not in rendered
+    assert (
+        '<div class="item-text">Body of the first story. '
+        'More of the same paragraph.</div>\n</li>'
+    ) in rendered
+    assert '<div class="item-text">Body of the second story.</div>' in rendered
+
+
+def test_markdown_renderer_nests_sub_bullets_inside_a_story():
+    rendered = inbrief.markdown_to_html(
+        "1. **Round-up.**\n"
+        "   - First point.\n"
+        "   - Second point.\n"
+        "2. **Next story.**"
+    )
+
+    assert '<ul class="item-list">' in rendered
+    assert rendered.count("<ol>") == 1
+    # The sub-list closes before the next story item opens.
+    assert '</ul>\n</li>\n<li><span class="story-number">2 </span>' in rendered
+
+
+def test_markdown_renderer_ends_a_list_on_unindented_prose():
+    rendered = inbrief.markdown_to_html(
+        "1. A story.\n   Its body.\n\nA closing note at the margin."
+    )
+
+    assert rendered.endswith("</ol>\n<p>A closing note at the margin.</p>")
+
+
+def test_markdown_renderer_treats_equally_indented_items_as_siblings():
+    rendered = inbrief.markdown_to_html("  - First point.\n  - Second point.")
+
+    assert rendered.count("<ul>") == 1
+    assert 'class="item-list"' not in rendered
+    assert rendered.count("<li>") == 2
+
+
 def test_email_template_escapes_dynamic_values():
     rendered = inbrief.render_email_html(
         "<script>label</script>",
@@ -218,6 +269,12 @@ def test_email_template_escapes_dynamic_values():
     assert (
         ".content ul li, .content ol li { padding-left:0 !important; }"
         in rendered
+    )
+    # Without the hanging indent the markers must flow inline, or they land on
+    # top of the first word.
+    assert (
+        ".content .glance-mark, .content .story-number "
+        "{ position:static !important; }" in rendered
     )
     assert "The Daily Digest" in rendered
     assert '<div class="dateline">Today</div>' in rendered
